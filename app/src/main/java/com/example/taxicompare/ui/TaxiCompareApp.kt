@@ -23,6 +23,8 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -130,19 +132,77 @@ fun LocationInputScreen(modifier: Modifier = Modifier) {
 fun HorizontalCardList() {
     // A sample list of data to display
     val cardItems = listOf("Card 1", "Card 2", "Card 3", "Card 4")
+    Column(modifier = Modifier.padding(12.dp)) {
+        Text(
+            text = "Последние поездки",
+            fontWeight = FontWeight.Bold,
+            fontSize = 24.sp,
+        )
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+//            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+//            items(cardItems) { item ->
+//                TripCard(R.drawable.adv8, item, price = "158 рублей", tripTime = "12o hours")
+//            }
+            items(cardItems) { item ->
+                RecentTripCard(item, item)
+            }
+        }
+    }
 
-    LazyRow(
-        modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+
+}
+
+@Composable
+fun RecentTripCard(
+    departure: String,
+    arrival: String
+) {
+    Card(
+        modifier = Modifier
+            .width(200.dp)
+            .padding(8.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 4.dp
+        ),
     ) {
-        items(cardItems) { item ->
-            TripCard(R.drawable.adv8, item, price = "158 рублей", tripTime = "12o hours")
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Departure",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+            )
+//            Spacer(modifier = Modifier.height(4.dp))
+//            Text(
+//                text = departure,
+//                fontSize = 14.sp,
+//                modifier = Modifier.padding(bottom = 8.dp)
+//            )
+
+            HorizontalDivider() // Optional separator line
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Arrival  ",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+            )
+//            Spacer(modifier = Modifier.height(4.dp))
+//            Text(
+//                text = arrival,
+//                fontSize = 14.sp,
+//                modifier = Modifier.padding(top = 8.dp)
+//            )
         }
     }
 }
-
-
 
 @Composable
 fun TripCard(
