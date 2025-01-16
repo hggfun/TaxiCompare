@@ -27,9 +27,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.paint
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.taxicompare.R
 import com.example.taxicompare.ui.theme.TaxiCompareTheme
 
 
@@ -37,12 +41,14 @@ import com.example.taxicompare.ui.theme.TaxiCompareTheme
 fun HomeScreen(onNavigateToTripDetails: (String, String) -> Unit) {
     TaxiCompareTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            Column(modifier = Modifier.padding(4.dp)) {
+            Column(modifier = Modifier.padding(innerPadding)) {
                 SettingsRow()
-                LocationInputScreen(
-                    modifier = Modifier.padding(innerPadding)
-                )
+//                LocationInputScreen(
+//                    modifier = Modifier.padding(innerPadding)
+//                )
+                AnimatedCardWithBottomSheet(onNavigateToTripDetails)
                 HorizontalCardList(onNavigateToTripDetails)
+                AdvertisementWidget()
             }
         }
     }
@@ -112,90 +118,3 @@ fun LocationInputScreen(modifier: Modifier = Modifier) {
         )
     }
 }
-
-@Composable
-fun HorizontalCardList(onNavigateToTripDetails: (String, String) -> Unit) {
-    // A sample list of data to display
-    val cardItems = listOf("Card 1", "Card 2", "Card 3", "Card 4")
-    Column(modifier = Modifier.padding(12.dp)) {
-        Text(
-            text = "Последние поездки",
-            fontWeight = FontWeight.Bold,
-            fontSize = 24.sp,
-        )
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-//            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-//            items(cardItems) { item ->
-//                TripCard(R.drawable.adv8, item, price = "158 рублей", tripTime = "12o hours")
-//            }
-            items(cardItems) { item ->
-                RecentTripCard(item, item, onNavigateToTripDetails)
-            }
-        }
-    }
-
-
-}
-
-@Composable
-fun RecentTripCard(
-    departure: String,
-    arrival: String,
-    onNavigateToTripDetails: (String, String) -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .width(200.dp)
-            .padding(8.dp),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 4.dp
-        ),
-        onClick = { onNavigateToTripDetails(departure, arrival) }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Text(
-                text = "Departure",
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-            )
-//            Spacer(modifier = Modifier.height(4.dp))
-//            Text(
-//                text = departure,
-//                fontSize = 14.sp,
-//                modifier = Modifier.padding(bottom = 8.dp)
-//            )
-
-            HorizontalDivider() // Optional separator line
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Arrival  ",
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-            )
-//            Spacer(modifier = Modifier.height(4.dp))
-//            Text(
-//                text = arrival,
-//                fontSize = 14.sp,
-//                modifier = Modifier.padding(top = 8.dp)
-//            )
-        }
-    }
-}
-
-//fun RecentTripCardClick() {
-//    onClick = {
-//        // Assuming both text fields contain data
-//        if (departure.text.isNotBlank() && arrival.text.isNotBlank()) {
-//            onNavigateToTripDetails(departure.text, arrival.text)
-//        }
-//    },
-//}
