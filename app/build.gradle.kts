@@ -36,6 +36,13 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
+    }
+}
+
+android {
+    defaultConfig {
+        buildConfigField("String", "MAPKIT_API_KEY", "\"${rootProject.ext["mapkitApiKey"]}\"")
     }
 }
 
@@ -60,4 +67,6 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    implementation(libs.maps.mobile)
 }

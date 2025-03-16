@@ -1,10 +1,9 @@
 package com.example.taxicompare.home
 
-import androidx.compose.foundation.Image
+import android.R.attr.maxLines
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -18,20 +17,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.taxicompare.R
+import com.example.taxicompare.api.GetLastTrips
 
 
 @Composable
 fun HorizontalCardList(onNavigateToTripDetails: (String, String) -> Unit) {
-    val cardItems = listOf("Card 1", "Card 2", "Card 3", "Card 4")
+    val cardItems = GetLastTrips()
     Card(
         modifier = Modifier
             .padding(12.dp),
@@ -51,7 +47,7 @@ fun HorizontalCardList(onNavigateToTripDetails: (String, String) -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(cardItems) { item ->
-                RecentTripCard(item, item, onNavigateToTripDetails)
+                RecentTripCard(item.first, item.second, onNavigateToTripDetails)
             }
         }
     }
@@ -81,9 +77,11 @@ fun RecentTripCard(
                 .padding(16.dp)
         ) {
             Text(
-                text = "Departure",
+                text = departure,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
 
             HorizontalDivider() // Optional separator line
@@ -91,9 +89,11 @@ fun RecentTripCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Arrival  ",
+                text = arrival,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

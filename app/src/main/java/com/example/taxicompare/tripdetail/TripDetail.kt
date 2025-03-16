@@ -55,12 +55,14 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
@@ -136,59 +138,68 @@ fun TripCard(
     var showSheet by remember { mutableStateOf(false) }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            //.width(240.dp)
-            .padding(8.dp),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 4.dp
-        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        modifier = Modifier.fillMaxWidth(),
         onClick = { showSheet = true }
     ) {
-        Row(
-            //verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Row(modifier = Modifier.padding(16.dp)) {
             Image(
-                painter = painterResource(id = iconResId),
-                contentDescription = "Company Icon",
-                modifier = Modifier.size(40.dp),
-                contentScale = ContentScale.Crop
+                painter = painterResource(iconResId),
+                contentDescription = companyName,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(4.dp))
             )
-
-            Text(
-                text = companyName,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                modifier = Modifier.weight(1f) // Expand to fill the remaining space
-            )
-
-            IconButton(onClick = {
-                // Handle like action
-            }) {
-                Icon(Icons.Default.ThumbUp, contentDescription = "Like")
-            }
-
-            IconButton(onClick = {
-                // Handle dislike action
-            }) {
-                Icon(Icons.Default.ThumbUp, contentDescription = "Dislike")
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(companyName, style = MaterialTheme.typography.titleMedium)
+                Text("Цена: $price рублей", style = MaterialTheme.typography.bodyMedium)
+                Text("Время подачи: $tripTime минут", style = MaterialTheme.typography.bodyMedium)
             }
         }
-
-        Text(
-            text = "Price: $price",
-            fontSize = 14.sp,
-            modifier = Modifier.padding(vertical = 4.dp)
-        )
-
-        Text(
-            text = "Trip Time: $tripTime",
-            fontSize = 14.sp,
-            modifier = Modifier.padding(vertical = 4.dp)
-        )
     }
+//    Card(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .padding(16.dp),
+//        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+//        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+//        onClick = { showSheet = true }
+//    ) {
+//        Row(
+//            //verticalAlignment = Alignment.CenterVertically,
+//            horizontalArrangement = Arrangement.SpaceBetween,
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .padding(24.dp)
+//        ) {
+//            Image(
+//                painter = painterResource(id = iconResId),
+//                contentDescription = "Company Icon",
+//                modifier = Modifier.size(40.dp),
+//                contentScale = ContentScale.Crop
+//            )
+//
+//            Text(
+//                text = companyName,
+//                fontWeight = FontWeight.Bold,
+//                fontSize = 16.sp,
+//                modifier = Modifier.weight(1f).padding(horizontal = 16.dp) // Expand to fill the remaining space
+//            )
+//        }
+//
+//        Text(
+//            text = "Цена: $price рублей",
+//            fontSize = 14.sp,
+//            modifier = Modifier.padding(vertical = 4.dp, horizontal = 16.dp)
+//        )
+//
+//        Text(
+//            text = "Время подачи: $tripTime минут",
+//            fontSize = 14.sp,
+//            modifier = Modifier.padding(vertical = 4.dp, horizontal = 16.dp)
+//        )
+//    }
 
     if (showSheet) {
         PricePredictionCard(iconResId, companyName, price.toInt(), tripTime, GetPricePredict())

@@ -2,6 +2,7 @@ package com.example.taxicompare.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,23 +35,45 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.taxicompare.R
+import com.example.taxicompare.carsharing.CarsharingScreen
+import com.example.taxicompare.kicksharing.KicksharingScreen
+import com.example.taxicompare.navigation.BottomNavItem
+import com.example.taxicompare.navigation.MakeBottomNavigation
 import com.example.taxicompare.ui.theme.TaxiCompareTheme
+import com.yandex.mapkit.MapKitFactory
 
 
 @Composable
 fun HomeScreen(onNavigateToTripDetails: (String, String) -> Unit) {
+    var selectedItem by remember { mutableStateOf<BottomNavItem>(BottomNavItem.Taxi) }
+
     TaxiCompareTheme {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            Column(modifier = Modifier.padding(innerPadding)) {
-                SettingsRow()
-//                LocationInputScreen(
-//                    modifier = Modifier.padding(innerPadding)
-//                )
-                AnimatedCardWithBottomSheet(onNavigateToTripDetails)
-                HorizontalCardList(onNavigateToTripDetails)
-                AdvertisementWidget()
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            bottomBar = { MakeBottomNavigation(
+                selectedItem = selectedItem,
+                onItemSelected = { selectedItem = it }
+            ) }
+        ) { innerPadding ->
+            when (selectedItem) {
+                BottomNavItem.Taxi -> TaxiScreen(innerPadding, onNavigateToTripDetails)
+                BottomNavItem.CarSharing -> CarsharingScreen()
+                BottomNavItem.KickSharing -> KicksharingScreen()
             }
         }
+    }
+}
+
+@Composable
+fun TaxiScreen(
+    innerPadding: PaddingValues,
+    onNavigateToTripDetails: (String, String) -> Unit
+) {
+    Column(modifier = Modifier.padding(innerPadding)) {
+        SettingsRow()
+        AnimatedCardWithBottomSheet(onNavigateToTripDetails)
+        HorizontalCardList(onNavigateToTripDetails)
+        AdvertisementWidget()
     }
 }
 
@@ -93,7 +116,9 @@ fun LocationInputScreen(modifier: Modifier = Modifier) {
         elevation = CardDefaults.cardElevation(
             defaultElevation = 8.dp
         ),
-        modifier = Modifier.fillMaxWidth().padding(12.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(12.dp)
     ) {
         TextField(
             value = departureLocation,
@@ -105,7 +130,9 @@ fun LocationInputScreen(modifier: Modifier = Modifier) {
 //                            contentDescription = "Search Icon"
 //                        )
 //                    },
-            modifier = Modifier.fillMaxWidth().height(56.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -114,7 +141,9 @@ fun LocationInputScreen(modifier: Modifier = Modifier) {
             value = arrivalLocation,
             onValueChange = { arrivalLocation = it },
             label = { Text("Arrival Location") },
-            modifier = Modifier.fillMaxWidth().height(56.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
         )
     }
 }

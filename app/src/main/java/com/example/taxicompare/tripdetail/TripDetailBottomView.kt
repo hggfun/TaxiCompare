@@ -254,8 +254,8 @@ fun PricePredictionCard(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(companyName, style = MaterialTheme.typography.titleMedium)
-                            Text("Price: $price", style = MaterialTheme.typography.bodyMedium)
-                            Text("Trip Time: $tripTime", style = MaterialTheme.typography.bodyMedium)
+                            Text("Цена: $price рублей", style = MaterialTheme.typography.bodyMedium)
+                            Text("Время подачи: $tripTime минут", style = MaterialTheme.typography.bodyMedium)
                         }
                     }
                 }
@@ -270,8 +270,8 @@ fun PricePredictionCard(
                         .fillMaxWidth()
                 ) {
                     Text(
-                        text = if (betterPriceAhead) "You could wait to get better price"
-                        else "The price will not get cheaper",
+                        text = if (betterPriceAhead) "Можно подождать и цена будет ниже"
+                        else "Не стоит ждать, цена только вырстет",
                         color = color,
                         modifier = Modifier.padding(12.dp),
                         style = MaterialTheme.typography.bodyMedium

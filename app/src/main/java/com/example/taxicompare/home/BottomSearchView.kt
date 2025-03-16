@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.taxicompare.api.GetLastAddresses
 import kotlinx.coroutines.delay
 
 enum class FieldType {
@@ -332,7 +333,7 @@ fun AnimatedCardWithBottomSheet(
             )
 
             RecentAddressCard(
-                recentAddresses = listOf("Departure", "Destination", "Travel", "Adventure"),
+                recentAddresses = GetLastAddresses(),
                 onAddressClick = { address ->
                     if (focusedField == FieldType.DEPARTURE) {
                         departureText = address
