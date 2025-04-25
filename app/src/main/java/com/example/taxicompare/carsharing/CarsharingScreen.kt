@@ -107,10 +107,12 @@ fun LocateCarsOnMap(
         }
     }
 
-    selectedMapObject?.let {
+    selectedMapObject.let {
         if (selectedMapObject) {
-            CarDetailsCard()
-//            selectedMapObject = false
+            CarDetailsCard(
+                selectedMapObject,
+                onDismissRequest = { selectedMapObject = false }
+            )
         }
     }
 }
@@ -118,14 +120,13 @@ fun LocateCarsOnMap(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CarDetailsCard(
+    showSheet: Boolean,
+    onDismissRequest: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    var showSheet by remember { mutableStateOf(true) }
-
     if (showSheet) {
         ModalBottomSheet(
-            onDismissRequest = { showSheet = false },
+            onDismissRequest = onDismissRequest,
             sheetState = sheetState
         ) {
             Card(
@@ -144,7 +145,7 @@ fun CarDetailsCard(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text("BelkaCar", style = MaterialTheme.typography.titleMedium)
-                        Text("Price: от 27р/минута", style = MaterialTheme.typography.bodyMedium)
+                        Text("Цена: от 27р/минута", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }

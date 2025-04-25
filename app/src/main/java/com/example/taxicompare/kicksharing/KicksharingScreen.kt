@@ -108,10 +108,12 @@ fun LocateScootersOnMap(
         }
     }
 
-    selectedMapObject?.let {
+    selectedMapObject.let {
         if (selectedMapObject) {
-            ScooterDetailsCard()
-//            selectedMapObject = false
+            ScooterDetailsCard(
+                selectedMapObject,
+                onDismissRequest = { selectedMapObject = false }
+            )
         }
     }
 }
@@ -119,14 +121,14 @@ fun LocateScootersOnMap(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScooterDetailsCard(
+    showSheet: Boolean,
+    onDismissRequest: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    var showSheet by remember { mutableStateOf(true) }
-
     if (showSheet) {
         ModalBottomSheet(
-            onDismissRequest = { showSheet = false },
+            onDismissRequest = onDismissRequest,
             sheetState = sheetState
         ) {
             Card(

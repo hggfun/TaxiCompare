@@ -170,7 +170,15 @@ fun TripCard(
     }
 
     if (showSheet) {
-        PricePredictionCard(iconResId, companyName, price.toInt(), tripTime, viewModel)
+        PricePredictionCard(
+            iconResId,
+            companyName,
+            price.toInt(),
+            tripTime,
+            viewModel,
+            showSheet,
+            onDismissRequest = { showSheet = false}
+        )
     }
 }
 

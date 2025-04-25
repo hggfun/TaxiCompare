@@ -225,7 +225,9 @@ fun PricePredictionCard(
     companyName: String,
     price: Int,
     tripTime: String,
-    viewModel: TripViewModel
+    viewModel: TripViewModel,
+    showSheet: Boolean,
+    onDismissRequest: () -> Unit
 ) {
     var prices by remember { mutableStateOf<List<Int>>(emptyList()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -242,11 +244,9 @@ fun PricePredictionCard(
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    var showSheet by remember { mutableStateOf(true) }
-
     if (showSheet) {
         ModalBottomSheet(
-            onDismissRequest = { showSheet = false },
+            onDismissRequest = onDismissRequest,
             sheetState = sheetState,
             modifier = Modifier
                 .fillMaxHeight(0.8f)
