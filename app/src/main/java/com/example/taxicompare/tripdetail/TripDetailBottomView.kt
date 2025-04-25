@@ -34,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,9 +56,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.room.Room
 import com.example.taxicompare.R
 import com.example.taxicompare.api.GetPricePredict
+import com.example.taxicompare.cache.PricePredictionDao
+import com.example.taxicompare.cache.PricePredictionEntity
+import com.example.taxicompare.cache.PricePredictionRepository
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun PricePredictionChart(
@@ -219,9 +225,18 @@ fun PricePredictionCard(
     companyName: String,
     price: Int,
     tripTime: String,
-    predictions: List<Int>
+    repository: PricePredictionRepository
 ) {
-    val betterPriceAhead = isBetterPricePredicted(predictions, price)
+    var prices by remember { mutableStateOf<List<Int>>(emptyList()) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(true) {
+        try {
+            prices = repository.getPredictCache() { GetPricePredict() }
+        } catch (e: Exception) {
+            errorMessage = "Failed to fetch prices: ${e.localizedMessage}"
+        }
+    }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -260,6 +275,7 @@ fun PricePredictionCard(
                     }
                 }
 
+                val betterPriceAhead = isBetterPricePredicted(prices, price)
                 val color = if (betterPriceAhead) Color.Green else Color.Red
 
                 OutlinedCard(
@@ -278,15 +294,16 @@ fun PricePredictionCard(
                     )
                 }
 
-                PricePredictionChart(predictions, price)
+                PricePredictionChart(prices, price)
             }
         }
 
     }
 }
 
-@Preview
-@Composable
-fun preview() {
-    PricePredictionCard(iconResId = R.drawable.adv8, companyName = "Taxi Co 1", price = 240, tripTime = "15 min", GetPricePredict())
-}
+//@Preview
+//@Composable
+//fun preview() {
+//    val redictionRepo = PricePredictionRepository(Unit)
+//    PricePredictionCard(iconResId = R.drawable.adv8, companyName = "Taxi Co 1", price = 240, tripTime = "15 min")
+//}

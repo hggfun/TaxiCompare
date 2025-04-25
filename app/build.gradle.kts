@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.ksp)
 }
 
 android {
@@ -16,6 +17,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "MAPKIT_API_KEY", "\"${rootProject.ext["mapkitApiKey"]}\"")
     }
 
     buildTypes {
@@ -37,12 +40,6 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
-    }
-}
-
-android {
-    defaultConfig {
-        buildConfigField("String", "MAPKIT_API_KEY", "\"${rootProject.ext["mapkitApiKey"]}\"")
     }
 }
 
@@ -69,4 +66,15 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     implementation(libs.maps.mobile)
+
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    implementation(libs.gson)
 }

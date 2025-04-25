@@ -15,14 +15,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.room.Room
+import com.example.taxicompare.cache.AppDatabase
+import com.example.taxicompare.cache.PricePredictionRepository
+import com.example.taxicompare.tripdetail.TripViewModel
+import com.example.taxicompare.tripdetail.TripViewModelFactory
 
 @Composable
-fun NavigationControllerSetup() {
+fun NavigationControllerSetup(appDatabase: AppDatabase) {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = "location_entry") {
@@ -39,9 +45,13 @@ fun NavigationControllerSetup() {
                 navArgument("arrival") { type = NavType.StringType }
             )
         ) { backStackEntry ->
+            val repository = PricePredictionRepository(appDatabase.pricePredictionDao())
+            val viewModel: TripViewModel = viewModel(
+                factory = TripViewModelFactory(repository)
+            )
             val departure = backStackEntry.arguments?.getString("departure") ?: ""
             val arrival = backStackEntry.arguments?.getString("arrival") ?: ""
-            TripDetailScreen(departure = departure, arrival = arrival)
+            TripDetailScreen(departure = departure, arrival = arrival, repository = repository)
         }
     }
 }

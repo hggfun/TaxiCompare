@@ -1,5 +1,6 @@
 package com.example.taxicompare.ui
 
+import android.app.Application
 import androidx.compose.foundation.Image
 import com.example.taxicompare.ui.theme.TaxiCompareTheme
 import com.example.taxicompare.R
@@ -39,10 +40,38 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.room.Room
+import com.example.taxicompare.cache.AppDatabase
+import com.example.taxicompare.cache.PricePredictionRepository
 import com.example.taxicompare.navigation.NavigationControllerSetup
+import com.yandex.mapkit.MapKitFactory
 
-@Preview
 @Composable
-fun TaxiCompareApp() {
-    NavigationControllerSetup()
+fun TaxiCompareApp(appDatabase: AppDatabase) {
+    NavigationControllerSetup(appDatabase)
 }
+
+class App : Application() {
+    lateinit var appDatabase: AppDatabase
+        private set
+
+    override fun onCreate() {
+        super.onCreate()
+        appDatabase = Room.databaseBuilder(
+            this,
+            AppDatabase::class.java,
+            "database"
+        ).build()
+    }
+}
+
+//fun SetupApplicationBase(
+//    activity: MainActivity,
+//    application: Application,
+//) {
+//    MapKitFactory.setApiKey(
+//        "90610862-263d-45b7-b5c0-c0872919a2b3")
+//    MapKitFactory.initialize(activity)
+//
+//    val db = (application as App).appDatabase
+//}

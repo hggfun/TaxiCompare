@@ -61,6 +61,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -93,28 +94,35 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import com.example.taxicompare.api.GetPricePredict
+import com.example.taxicompare.cache.PricePredictionRepository
 
-@Preview
-@Composable
-fun Preview() {
-    TripDetailScreen("уник", "дом")
-}
+//@Preview
+//@Composable
+//fun Preview() {
+//    TripDetailScreen("уник", "дом")
+//}
 
 @Composable
-fun TripDetailScreen(departure: String, arrival: String) {
+fun TripDetailScreen(
+    departure: String,
+    arrival: String,
+    repository: PricePredictionRepository
+) {
     TaxiCompareTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             Column(modifier = Modifier.padding(innerPadding)) {
                 DepartureArrival(departure, arrival)
                 Spacer(modifier = Modifier.padding(12.dp))
-                MakeTripDetailScreen()
+                MakeTripDetailScreen(repository)
             }
         }
     }
 }
 
 @Composable
-fun MakeTripDetailScreen() {
+fun MakeTripDetailScreen(
+    repository: PricePredictionRepository
+) {
     val tripOffers: List<TripOffer> = GetOffers()
     LazyColumn {
         items(tripOffers) { tripOffer ->
@@ -122,7 +130,8 @@ fun MakeTripDetailScreen() {
                 iconResId = tripOffer.iconResId,
                 companyName = tripOffer.companyName,
                 price = tripOffer.price,
-                tripTime = tripOffer.tripTime
+                tripTime = tripOffer.tripTime,
+                repository
             )
         }
     }
@@ -133,7 +142,8 @@ fun TripCard(
     iconResId: Int, // Resource ID for the image/icon
     companyName: String,
     price: String,
-    tripTime: String
+    tripTime: String,
+    repository: PricePredictionRepository
 ) {
     var showSheet by remember { mutableStateOf(false) }
 
@@ -158,51 +168,9 @@ fun TripCard(
             }
         }
     }
-//    Card(
-//        modifier = Modifier
-//            .fillMaxWidth()
-//            .padding(16.dp),
-//        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-//        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-//        onClick = { showSheet = true }
-//    ) {
-//        Row(
-//            //verticalAlignment = Alignment.CenterVertically,
-//            horizontalArrangement = Arrangement.SpaceBetween,
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(24.dp)
-//        ) {
-//            Image(
-//                painter = painterResource(id = iconResId),
-//                contentDescription = "Company Icon",
-//                modifier = Modifier.size(40.dp),
-//                contentScale = ContentScale.Crop
-//            )
-//
-//            Text(
-//                text = companyName,
-//                fontWeight = FontWeight.Bold,
-//                fontSize = 16.sp,
-//                modifier = Modifier.weight(1f).padding(horizontal = 16.dp) // Expand to fill the remaining space
-//            )
-//        }
-//
-//        Text(
-//            text = "Цена: $price рублей",
-//            fontSize = 14.sp,
-//            modifier = Modifier.padding(vertical = 4.dp, horizontal = 16.dp)
-//        )
-//
-//        Text(
-//            text = "Время подачи: $tripTime минут",
-//            fontSize = 14.sp,
-//            modifier = Modifier.padding(vertical = 4.dp, horizontal = 16.dp)
-//        )
-//    }
 
     if (showSheet) {
-        PricePredictionCard(iconResId, companyName, price.toInt(), tripTime, GetPricePredict())
+        PricePredictionCard(iconResId, companyName, price.toInt(), tripTime, repository)
     }
 }
 

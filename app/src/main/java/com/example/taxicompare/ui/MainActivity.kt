@@ -10,12 +10,16 @@ import com.yandex.mapkit.MapKitFactory
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         MapKitFactory.setApiKey(
             BuildConfig.MAPKIT_API_KEY)
         MapKitFactory.initialize(this)
+
+        val appDatabase = (application as App).appDatabase
+
         enableEdgeToEdge()
         setContent {
-            TaxiCompareApp()
+            TaxiCompareApp(appDatabase)
         }
     }
 }
