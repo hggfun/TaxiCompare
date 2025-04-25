@@ -51,7 +51,7 @@ fun NavigationControllerSetup(appDatabase: AppDatabase) {
             )
             val departure = backStackEntry.arguments?.getString("departure") ?: ""
             val arrival = backStackEntry.arguments?.getString("arrival") ?: ""
-            TripDetailScreen(departure = departure, arrival = arrival, repository = repository)
+            TripDetailScreen(departure = departure, arrival = arrival, viewModel = viewModel)
         }
     }
 }

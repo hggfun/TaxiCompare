@@ -106,14 +106,14 @@ import com.example.taxicompare.cache.PricePredictionRepository
 fun TripDetailScreen(
     departure: String,
     arrival: String,
-    repository: PricePredictionRepository
+    viewModel: TripViewModel
 ) {
     TaxiCompareTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             Column(modifier = Modifier.padding(innerPadding)) {
                 DepartureArrival(departure, arrival)
                 Spacer(modifier = Modifier.padding(12.dp))
-                MakeTripDetailScreen(repository)
+                MakeTripDetailScreen(viewModel)
             }
         }
     }
@@ -121,7 +121,7 @@ fun TripDetailScreen(
 
 @Composable
 fun MakeTripDetailScreen(
-    repository: PricePredictionRepository
+    viewModel: TripViewModel
 ) {
     val tripOffers: List<TripOffer> = GetOffers()
     LazyColumn {
@@ -131,7 +131,7 @@ fun MakeTripDetailScreen(
                 companyName = tripOffer.companyName,
                 price = tripOffer.price,
                 tripTime = tripOffer.tripTime,
-                repository
+                viewModel
             )
         }
     }
@@ -143,7 +143,7 @@ fun TripCard(
     companyName: String,
     price: String,
     tripTime: String,
-    repository: PricePredictionRepository
+    viewModel: TripViewModel
 ) {
     var showSheet by remember { mutableStateOf(false) }
 
@@ -170,7 +170,7 @@ fun TripCard(
     }
 
     if (showSheet) {
-        PricePredictionCard(iconResId, companyName, price.toInt(), tripTime, repository)
+        PricePredictionCard(iconResId, companyName, price.toInt(), tripTime, viewModel)
     }
 }
 

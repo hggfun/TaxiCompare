@@ -18,16 +18,10 @@ class TripViewModel(
 ) : ViewModel() {
     var prices by mutableStateOf<List<Int>>(emptyList())
         private set
-//    var errorMessage by { mutableStateOf<String?>(null) }
-//        private set
 
     fun loadPredictions() {
         viewModelScope.launch {
-//            try {
-                prices = repository.getPredictCache() { GetPricePredict() }
-//            } catch (e: Exception) {
-//                errorMessage = "Failed to fetch prices: ${e.localizedMessage}"
-//            }
+            prices = repository.getPredictCache() { GetPricePredict() }
         }
     }
 }

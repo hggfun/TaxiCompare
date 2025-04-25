@@ -225,18 +225,20 @@ fun PricePredictionCard(
     companyName: String,
     price: Int,
     tripTime: String,
-    repository: PricePredictionRepository
+    viewModel: TripViewModel
 ) {
     var prices by remember { mutableStateOf<List<Int>>(emptyList()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(true) {
         try {
-            prices = repository.getPredictCache() { GetPricePredict() }
+            viewModel.loadPredictions()
         } catch (e: Exception) {
             errorMessage = "Failed to fetch prices: ${e.localizedMessage}"
         }
     }
+
+    prices = viewModel.prices
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
