@@ -23,10 +23,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.taxicompare.api.GetLastTrips
+import com.example.taxicompare.model.Address
+import com.example.taxicompare.model.UserRequest
+import com.yandex.mapkit.geometry.Point
 
 
 @Composable
-fun HorizontalCardList(onNavigateToTripDetails: (String, String) -> Unit) {
+fun HorizontalCardList(onNavigateToTripDetails: (String, String, UserRequest) -> Unit) {
     val cardItems = GetLastTrips()
     Card(
         modifier = Modifier
@@ -57,8 +60,15 @@ fun HorizontalCardList(onNavigateToTripDetails: (String, String) -> Unit) {
 fun RecentTripCard(
     departure: String,
     arrival: String,
-    onNavigateToTripDetails: (String, String) -> Unit
+    onNavigateToTripDetails: (String, String, UserRequest) -> Unit
 ) {
+    // TODO normal user request
+    val userRequest = UserRequest(
+        location = Point(1.0, 1.0),
+        departure = Address("test_name", Point(55.751591, 37.714939)),
+        arrival = Address("test_name", Point(55.753975, 37.648425)),
+        tariff = 0
+    )
     Card(
         modifier = Modifier
             .width(200.dp)
@@ -69,7 +79,7 @@ fun RecentTripCard(
         elevation = CardDefaults.cardElevation(
             defaultElevation = 4.dp
         ),
-        onClick = { onNavigateToTripDetails(departure, arrival) }
+        onClick = { onNavigateToTripDetails(departure, arrival, userRequest) }
     ) {
         Column(
             modifier = Modifier

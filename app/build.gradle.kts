@@ -19,6 +19,8 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "MAPKIT_API_KEY", "\"${rootProject.ext["mapkitApiKey"]}\"")
+        buildConfigField("String", "YA_TAXI_API_KEY", "\"${rootProject.ext["yaTaxiApiKey"]}\"")
+        buildConfigField("String", "TAKSOVICHKOFF_API_KEY", "\"${rootProject.ext["taksovichkoffApiKey"]}\"")
     }
 
     buildTypes {
@@ -66,6 +68,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     implementation(libs.maps.mobile)
+    implementation(libs.mapkit)
 
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
@@ -77,4 +80,6 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.gson)
+
+    implementation(libs.mobileads)
 }

@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.kotlin.ksp) apply false
 }
 
-val mapkitApiKey: String = run {
+val MapkitApiKey: String = run {
     val properties = Properties()
     val localPropertiesFile = rootProject.file("local.properties")
     if (localPropertiesFile.exists()) {
@@ -18,4 +18,24 @@ val mapkitApiKey: String = run {
     } else ""
 }
 
-ext["mapkitApiKey"] = mapkitApiKey
+val YaTaxiApiKey: String = run {
+    val properties = Properties()
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        properties.load(FileInputStream(localPropertiesFile))
+        properties.getProperty("YA_TAXI_API_KEY", "")
+    } else ""
+}
+
+val TaksovichkoffApiKey: String = run {
+    val properties = Properties()
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        properties.load(FileInputStream(localPropertiesFile))
+        properties.getProperty("TAKSOVICHKOFF_API_KEY", "")
+    } else ""
+}
+
+ext["mapkitApiKey"] = MapkitApiKey
+ext["yaTaxiApiKey"] = YaTaxiApiKey
+ext["taksovichkoffApiKey"] = TaksovichkoffApiKey

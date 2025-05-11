@@ -2,9 +2,13 @@ package com.example.taxicompare.api
 
 import android.util.Log
 import android.widget.Toast
+import com.example.taxicompare.tripdetail.TripViewModel
 import io.ktor.client.*
+import io.ktor.client.call.body
 import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
+import io.ktor.client.request.headers
 import io.ktor.client.request.request
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -14,42 +18,39 @@ import io.ktor.client.statement.request
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.json.Json
+import org.json.JSONObject
 
-suspend fun GetPricePredict(): List<Int> {
-    val client = HttpClient(CIO)
-//    val response: HttpResponse = client.get("https://ktor.io/")
-//    return response.bodyAsText()
-//        .split(',')
-//        .map { it.toIntOrNull() ?: 0 }
+suspend fun GetPricePredict(viewModel: TripViewModel): List<Int> {
+    var predictions: List<Int>
 
-//    val response2: HttpResponse = client.get("http://130.193.59.88:8080/get_config") {
-//        url {
-//            parameters.append("taxi", "yandex")
-//        }
-//    }
-//    Log.v("Testing", "ready to get response2.bodyAsText()")
-//    Log.v("Testing", response2.bodyAsText())
-
-    val response4: HttpResponse = client.get("http://130.193.59.88:8080/ping")
-    Log.v("Testing", response4.request.content.toString())
-    Log.v("Testing", response4.status.value.toString())
-    Log.v("Testing", response4.bodyAsText())
-
-
-
-    val response3: HttpResponse = client.get("http://130.193.59.88:8080/get-config") {
-        contentType(ContentType.Application.Json)
-        setBody("{\"type\": \"taxi\", \"name\": \"yandex\"}")
+    val client = HttpClient(CIO) {
+        install(ContentNegotiation) {
+            json(Json { ignoreUnknownKeys = true })
+        }
     }
-    Log.v("Testing", "ready to get response3.bodyAsText()")
-    Log.v("Testing", response3.request.content.toString())
-    Log.v("Testing", response3.status.value.toString())
-    Log.v("Testing", response3.bodyAsText())
+    try {
+        val response: HttpResponse = client.get("http://130.193.59.88:8080/get-config") {
+            contentType(ContentType.Application.Json)
+            setBody(viewModel.extendedTripInfo)
+        }
+        predictions = ParsePricePredict(response.bodyAsText())
+    } catch (e: Exception) {
+        Log.v("Ktor Request Error", e.localizedMessage)
+        predictions = listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    } finally {
+        client.close()
+    }
+    return predictions
+}
 
-    val jokeResponse: HttpResponse = client.get("https://api.chucknorris.io/jokes/random")
-    Log.v("Testing", "ready to get joke .bodyAsText()")
-    Log.v("Testing", jokeResponse.bodyAsText())
-
-    client.close()
-    return listOf(250, 260, 280, 200)
+fun ParsePricePredict(jsonString: String): List<Int> {
+    val jsonObject = JSONObject(jsonString)
+    val predictions = jsonObject.getJSONArray("prediction")
+    var result = mutableListOf<Int>()
+    for (index in 0 until predictions.length()) {
+        result.add(predictions.getDouble(index).toInt())
+    }
+    return result
 }

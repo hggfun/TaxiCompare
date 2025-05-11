@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -62,6 +65,7 @@ import com.example.taxicompare.api.GetPricePredict
 import com.example.taxicompare.cache.PricePredictionDao
 import com.example.taxicompare.cache.PricePredictionEntity
 import com.example.taxicompare.cache.PricePredictionRepository
+import com.example.taxicompare.ui.App
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -88,23 +92,6 @@ fun PricePredictionChart(
         val canvasWidth = size.width
         val canvasHeight = size.height
 
-        // Draw Checkered Background
-//        val rows = 5
-//        val cols = (predictions.size).coerceAtLeast(1)
-//        val rowHeight = canvasHeight / rows
-//        val colWidth = canvasWidth / cols
-//
-//        for (i in 0..cols) {
-//            for (j in 0..rows) {
-//                val isLightSquare = (i + j) % 2 == 0
-//                drawRect(
-//                    color = if (isLightSquare) Color(0xFFFAFAFA) else Color(0xFFE0E0E0),
-//                    topLeft = Offset(i * colWidth, j * rowHeight),
-//                    size = Size(colWidth, rowHeight)
-//                )
-//            }
-//        }
-
         // Draw Axes
         drawLine(
             color = Color.Gray,
@@ -119,31 +106,13 @@ fun PricePredictionChart(
             end = Offset(0f, canvasHeight),
             strokeWidth = 2.dp.toPx()
         )
-//
-//        // Draw horizontal grid lines and price markers (vertical axis)
+
+        // Draw horizontal grid lines and price markers (vertical axis)
         val textPaint = android.graphics.Paint().apply {
             color = android.graphics.Color.DKGRAY
             textAlign = android.graphics.Paint.Align.RIGHT
             textSize = 50f
         }
-//
-//        for (i in 0..rows) {
-//            val y = canvasHeight - (i * rowHeight)
-//            val priceLabel = minPrice + (priceRange * i / rows)
-//            drawLine(
-//                color = Color.LightGray,
-//                start = Offset(0f, y),
-//                end = Offset(canvasWidth, y),
-//                strokeWidth = 1.dp.toPx(),
-//            )
-//
-//            drawContext.canvas.nativeCanvas.drawText(
-//                "$priceLabel",
-//                -5f,
-//                y + 10f,
-//                textPaint
-//            )
-//        }
 
         // Calculate points positions
         val pointSpacing = canvasWidth / (predictions.size - 1).coerceAtLeast(1)
@@ -206,7 +175,7 @@ fun PricePredictionChart(
         )
 
         drawContext.canvas.nativeCanvas.drawText(
-            "Current: $currentPrice",
+            "Текущая: $currentPrice",
             canvasWidth - 10.dp.toPx(),
             currentY - 10f,
             textPaint.apply { textAlign = android.graphics.Paint.Align.RIGHT }
@@ -224,13 +193,14 @@ fun PricePredictionCard(
     iconResId: Int, // Resource ID for the image/icon
     companyName: String,
     price: Int,
-    tripTime: String,
+    tripTime: String?,
     viewModel: TripViewModel,
     showSheet: Boolean,
     onDismissRequest: () -> Unit
 ) {
     var prices by remember { mutableStateOf<List<Int>>(emptyList()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var adWatched by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(true) {
         try {
@@ -239,7 +209,6 @@ fun PricePredictionCard(
             errorMessage = "Failed to fetch prices: ${e.localizedMessage}"
         }
     }
-
     prices = viewModel.prices
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -272,7 +241,9 @@ fun PricePredictionCard(
                         Column {
                             Text(companyName, style = MaterialTheme.typography.titleMedium)
                             Text("Цена: $price рублей", style = MaterialTheme.typography.bodyMedium)
-                            Text("Время подачи: $tripTime минут", style = MaterialTheme.typography.bodyMedium)
+                            if (!tripTime.isNullOrEmpty()) {
+                                Text("Время подачи: $tripTime минут", style = MaterialTheme.typography.bodyMedium)
+                            }
                         }
                     }
                 }
@@ -296,7 +267,12 @@ fun PricePredictionCard(
                     )
                 }
 
-                PricePredictionChart(prices, price)
+                if (adWatched) {
+                    PricePredictionChart(prices, price)
+                } else {
+                    val app = LocalContext.current.applicationContext as App
+                    Button(onClick = { app.showAd{ adWatched = true } }) { }
+                }
             }
         }
 

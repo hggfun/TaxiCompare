@@ -45,6 +45,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.taxicompare.api.GetLastAddresses
+import com.example.taxicompare.model.Address
+import com.example.taxicompare.model.UserRequest
+import com.yandex.mapkit.geometry.Point
 import kotlinx.coroutines.delay
 
 enum class FieldType {
@@ -55,11 +58,18 @@ fun attemptNavigation(
     departureText: String,
     arrivalText: String,
     keyboardController: SoftwareKeyboardController?,
-    onNavigateToTripDetails: (String, String) -> Unit
+    onNavigateToTripDetails: (String, String, UserRequest) -> Unit
 ) {
     if (departureText.isNotBlank() && arrivalText.isNotBlank()) {
         keyboardController?.hide()
-        onNavigateToTripDetails(departureText, arrivalText)
+        // TODO normal user request
+        val userRequest = UserRequest(
+            location = Point(1.0, 1.0),
+            departure = Address("test_name", Point(55.751591, 37.714939)),
+            arrival = Address("test_name", Point(55.753975, 37.648425)),
+            tariff = 0
+        )
+        onNavigateToTripDetails(departureText, arrivalText, userRequest)
     }
 }
 
@@ -294,7 +304,7 @@ fun AnimatedSearchCard(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnimatedCardWithBottomSheet(
-    onNavigateToTripDetails: (String, String) -> Unit
+    onNavigateToTripDetails: (String, String, UserRequest) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -350,6 +360,6 @@ fun AnimatedCardWithBottomSheet(
 @Composable
 fun AnimatedCardScreen2() {
     AnimatedCardWithBottomSheet(
-        onNavigateToTripDetails = {a, b -> a + b}
+        onNavigateToTripDetails = {a, b, c -> a + b}
     )
 }

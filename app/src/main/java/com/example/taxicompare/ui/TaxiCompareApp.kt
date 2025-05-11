@@ -1,6 +1,9 @@
 package com.example.taxicompare.ui
 
+import android.app.Activity
 import android.app.Application
+import android.os.Bundle
+import android.util.Log
 import androidx.compose.foundation.Image
 import com.example.taxicompare.ui.theme.TaxiCompareTheme
 import com.example.taxicompare.R
@@ -45,6 +48,15 @@ import com.example.taxicompare.cache.AppDatabase
 import com.example.taxicompare.cache.PricePredictionRepository
 import com.example.taxicompare.navigation.NavigationControllerSetup
 import com.yandex.mapkit.MapKitFactory
+import com.yandex.mobile.ads.common.AdError
+import com.yandex.mobile.ads.common.AdRequestConfiguration
+import com.yandex.mobile.ads.common.AdRequestError
+import com.yandex.mobile.ads.common.ImpressionData
+import com.yandex.mobile.ads.rewarded.Reward
+import com.yandex.mobile.ads.rewarded.RewardedAd
+import com.yandex.mobile.ads.rewarded.RewardedAdLoader
+import com.yandex.mobile.ads.rewarded.RewardedAdLoadListener
+import com.yandex.mobile.ads.rewarded.RewardedAdEventListener
 
 @Composable
 fun TaxiCompareApp(appDatabase: AppDatabase) {
@@ -54,24 +66,93 @@ fun TaxiCompareApp(appDatabase: AppDatabase) {
 class App : Application() {
     lateinit var appDatabase: AppDatabase
         private set
+    internal var mainActivity: MainActivity? = null
+
+    internal var rewardedAd: RewardedAd? = null
+    internal var rewardedAdLoader: RewardedAdLoader? = null
 
     override fun onCreate() {
         super.onCreate()
+
         appDatabase = Room.databaseBuilder(
             this,
             AppDatabase::class.java,
             "database"
         ).build()
+
+        rewardedAdLoader = RewardedAdLoader(this).apply {
+            setAdLoadListener(object: RewardedAdLoadListener {
+                override fun onAdLoaded(ad: RewardedAd) {
+                    rewardedAd = ad
+                }
+
+                override fun onAdFailedToLoad(adRequestError: AdRequestError) {
+                }
+            })
+        }
+        loadRewardedAd()
+    }
+
+    private fun loadRewardedAd() {
+//        val adRequestConfiguration = AdRequestConfiguration.Builder("R-M-15092512-2").build()
+        val adRequestConfiguration = AdRequestConfiguration.Builder("demo-rewarded-yandex").build()
+        rewardedAdLoader?.loadAd(adRequestConfiguration)
+    }
+
+    fun showAd(onRewarded: () -> Unit) {
+        rewardedAd?.apply {
+            setAdEventListener(object: RewardedAdEventListener {
+                override fun onAdShown() {
+                    Log.v("Bober show", "shown")
+                    // Called when ad is shown.
+                }
+
+                override fun onAdFailedToShow(adError: AdError) {
+                    Log.v("Bober show", "failed")
+                    // Called when an RewardedAd failed to show
+
+                    // Clean resources after Ad failed to show
+                    destroyRewardedAd()
+
+                    // Now you can preload the next rewarded ad.
+                    loadRewardedAd()
+                }
+
+                override fun onAdDismissed() {
+                    Log.v("Bober show", "dismissed")
+                    // Called when ad is dismissed.
+                    // Clean resources after Ad dismissed
+                    destroyRewardedAd()
+
+                    // Now you can preload the next rewarded ad.
+                    loadRewardedAd()
+                }
+
+                override fun onAdClicked() {
+                    Log.v("Bober show", "clicked")
+                    // Called when a click is recorded for an ad.
+                }
+
+                override fun onAdImpression(impressionData: ImpressionData?) {
+                    Log.v("Bober show", "impressioned")
+                    // Called when an impression is recorded for an ad.
+                }
+
+                override fun onRewarded(reward: Reward) {
+                    Log.v("Bober show", "bober rewarded")
+                    onRewarded()
+                }
+            })
+            Log.v("Bober show", "ready to show ad")
+            if (mainActivity != null) {
+                Log.v("Bober show", "activity found, showing ad")
+                show(mainActivity!!)
+            }
+        }
+    }
+
+    internal fun destroyRewardedAd() {
+        rewardedAd?.setAdEventListener(null)
+        rewardedAd = null
     }
 }
-
-//fun SetupApplicationBase(
-//    activity: MainActivity,
-//    application: Application,
-//) {
-//    MapKitFactory.setApiKey(
-//        "90610862-263d-45b7-b5c0-c0872919a2b3")
-//    MapKitFactory.initialize(activity)
-//
-//    val db = (application as App).appDatabase
-//}

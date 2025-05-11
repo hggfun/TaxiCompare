@@ -26,14 +26,21 @@ import com.example.taxicompare.cache.AppDatabase
 import com.example.taxicompare.cache.PricePredictionRepository
 import com.example.taxicompare.tripdetail.TripViewModel
 import com.example.taxicompare.tripdetail.TripViewModelFactory
+import io.ktor.client.request.request
 
 @Composable
 fun NavigationControllerSetup(appDatabase: AppDatabase) {
     val navController = rememberNavController()
 
+    val repository = PricePredictionRepository(appDatabase.pricePredictionDao())
+    val viewModel: TripViewModel = viewModel(
+        factory = TripViewModelFactory(repository)
+    )
+
     NavHost(navController = navController, startDestination = "location_entry") {
         composable("location_entry") {
-            HomeScreen { departure, arrival ->
+            HomeScreen { departure, arrival, request ->
+                viewModel.setUserRequest(request)
                 navController.navigate("trip_details/$departure/$arrival")
             }
         }
@@ -45,13 +52,10 @@ fun NavigationControllerSetup(appDatabase: AppDatabase) {
                 navArgument("arrival") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val repository = PricePredictionRepository(appDatabase.pricePredictionDao())
-            val viewModel: TripViewModel = viewModel(
-                factory = TripViewModelFactory(repository)
-            )
             val departure = backStackEntry.arguments?.getString("departure") ?: ""
             val arrival = backStackEntry.arguments?.getString("arrival") ?: ""
-            TripDetailScreen(departure = departure, arrival = arrival, viewModel = viewModel)
+
+            TripDetailScreen(request = viewModel.request!!, viewModel = viewModel)
         }
     }
 }

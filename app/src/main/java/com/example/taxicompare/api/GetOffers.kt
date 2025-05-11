@@ -2,7 +2,12 @@ package com.example.taxicompare.api
 
 import android.util.Log
 import com.example.taxicompare.R
+import com.example.taxicompare.model.ExtendedTripInfo
+import com.example.taxicompare.model.TaxiConfig
 import com.example.taxicompare.model.TripOffer
+import com.example.taxicompare.testingdata.MakeStaticOffers
+import com.example.taxicompare.tripdetail.TripViewModel
+import com.yandex.mapkit.geometry.Point
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -18,9 +23,17 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import kotlinx.serialization.Serializable
 import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.request.request
+import io.ktor.http.HttpMethod
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.*
+import org.json.JSONArray
+import org.json.JSONObject
+import kotlin.math.round
 
 @Serializable
 data class ResponseData(
@@ -29,80 +42,201 @@ data class ResponseData(
     val universalDialog: String? // Nullable since it might be null
 )
 
-fun GetOffers(): List<TripOffer> {
+fun GetOffers2(configs: List<TaxiConfig>, viewModel: TripViewModel): List<TripOffer> {
     val sampleTripOffers = listOf(
         TripOffer(iconResId = R.drawable.yandex, companyName = "Yandex", price = "209", tripTime = "15"),
         TripOffer(iconResId = R.drawable.citimobil, companyName = "Ситимобил", price = "180", tripTime = "12"),
-        TripOffer(iconResId = R.drawable.taksovichkof, companyName = "Таксовичкоф", price = GetTaxovichkoffOffer(), tripTime = "20"),
+        TripOffer(iconResId = R.drawable.taksovichkof, companyName = "Таксовичкоф", price = "300", tripTime = "20"),
         TripOffer(iconResId = R.drawable.maxim, companyName = "Maxim", price = "300", tripTime = "15"),
         TripOffer(iconResId = R.drawable.omega, companyName = "Omega", price = "189", tripTime = "12")
     )
     return sampleTripOffers
 }
 
-fun GetOneOffer(): String {
-    Log.v("Bober", "starting the request")
-    val client = HttpClient(CIO) {
-//        install(ContentNegotiation) {
-//            json(Json { ignoreUnknownKeys = true })
-//        }
+suspend fun GetOffers(configs: List<TaxiConfig>, viewModel: TripViewModel): List<TripOffer> = coroutineScope {
+    val dynamicOffers = configs.map { config ->
+        async {
+            try {
+                GetOneOffer(config, viewModel)
+            } catch (e: Exception) {
+                Log.v("Bober Basic Error", e.toString())
+                null
+            }
+        }
+    }.awaitAll().filterNotNull()
+
+    val staticOffers: List<TripOffer> = if (dynamicOffers.isNotEmpty()) {
+        val priceInt = dynamicOffers.first().price.toIntOrNull() ?: 200
+        MakeStaticOffers(priceInt)
+    } else {
+        emptyList()
     }
-    Log.v("Bober", "created client")
 
+    return@coroutineScope dynamicOffers + staticOffers
+}
 
-    val url = "https://client.taximaxim.ru/ru-RU/service/calculate/?org=maxim&baseId=6&tax-id=yFL33BWu8yOEhqH0C0bV8BfGWKFjFba7Sxdwcdfppe71sHd4uxidkbS5%2B%2BYzBsW%2BiAH1yXFh2Na5bJdvZaNNTNRa6w%2BY1xpwqd1XUGEIcJc%3D"
-
-    val cookies = "__utm_params=87a31d3e4dd49c8d35891c5529b8532139c556997c254dfa297a41c946823d28a%3A2%3A%7Bi%3A0%3Bs%3A12%3A%22__utm_params%22%3Bi%3A1%3Bs%3A32%3A%22%7B%22utm_content%22%3A%22organic_search%22%7D%22%3B%7D; __intl=1a6c3f19d825211b4b399b7960038c6d1a93438adf1deb9825ed10de11d478f0a%3A2%3A%7Bi%3A0%3Bs%3A6%3A%22__intl%22%3Bi%3A1%3Bs%3A5%3A%22ru-RU%22%3B%7D; tmr_lvid=a11a3dc6c3afc8368270b684da94c9f2; tmr_lvidTS=1745173742653; _ym_uid=1745173743597455357; _ym_d=1745173743; _ym_visorc=w; _ym_isad=2; TAXSEE_V3MAXIM=nttojkpsnbk75ks719gg1a452p; __finger_print_hash=52020001f003d3003ba65459eff26a4f21eb3ac81476f65aa6dc8a1328955b97a%3A2%3A%7Bi%3A0%3Bs%3A19%3A%22__finger_print_hash%22%3Bi%3A1%3Bs%3A36%3A%229b21c982-9748-4b93-b12c-a91ff42015e4%22%3B%7D; __taxsee_country=a3955a5ac353f2e4e7d17c290443120d839243c2fd0771f171b22d86d37dd1aea%3A2%3A%7Bi%3A0%3Bs%3A16%3A%22__taxsee_country%22%3Bi%3A1%3Bs%3A2%3A%22RU%22%3B%7D; __taxsee_base=9e565dda8e6bd20cac1c9102001cb2c9eefacc9b3b39f8ab498ac1bb9d285a2da%3A2%3A%7Bi%3A0%3Bs%3A13%3A%22__taxsee_base%22%3Bi%3A1%3Bi%3A6%3B%7D; _csrf=bcac49f683f5b856b9ef41218b9841b6cbd919bb42ccbc8e5180fa8f1174fc37a%3A2%3A%7Bi%3A0%3Bs%3A5%3A%22_csrf%22%3Bi%3A1%3Bs%3A32%3A%22RRpK9U0YnKjrw0C3N7rs47_sqDeYmOun%22%3B%7D; _ga_T2DPT2GHZ5=GS1.1.1745173743.1.0.1745173743.0.0.0; _ga=GA1.2.1038059881.1745173743; _gid=GA1.2.2026264913.1745173743; tmr_detect=0%7C1745173745452"
-
-    val jsonBody = "_csrf=2G3Izybek5SFX-nEcwZv7WjSRLXr5tIuv4OsBmTF1cuKP7iEH4ujzesUg7YENizeJuU2xt_RjV3Ox8lfCYqgpQ%3D%3D&OrderForm%5Bid%5D=&OrderForm%5BbaseId%5D=6&AddressForm%5B0%5D%5BpointField%5D=%D0%AD%D0%BD%D1%82%D1%83%D0%B7%D0%B8%D0%B0%D1%81%D1%82%D0%BE%D0%B2+%D1%88%D0%BE%D1%81%D1%81%D0%B5%2C+13&AddressForm%5B0%5D%5Brem%5D=&AddressForm%5B0%5D%5Bhouse%5D=13&AddressForm%5B0%5D%5Blatitude%5D=55.7516263200415&AddressForm%5B0%5D%5Blongitude%5D=37.7150392286973&AddressForm%5B0%5D%5BaddressName%5D=%D0%AD%D0%BD%D1%82%D1%83%D0%B7%D0%B8%D0%B0%D1%81%D1%82%D0%BE%D0%B2+%D1%88%D0%BE%D1%81%D1%81%D0%B5%2C+13&AddressForm%5B0%5D%5BplaceName%5D=%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0&AddressForm%5B0%5D%5Bpoint%5D=QP6S8425616Z3056050&AddressForm%5B1%5D%5BpointField%5D=%D0%9F%D0%BE%D0%BA%D1%80%D0%BE%D0%B2%D1%81%D0%BA%D0%B8%D0%B9+%D0%B1%D1%83%D0%BB%D1%8C%D0%B2%D0%B0%D1%80%2C+11%D0%A11&AddressForm%5B1%5D%5Brem%5D=&AddressForm%5B1%5D%5Bhouse%5D=11%D0%A11&AddressForm%5B1%5D%5Blatitude%5D=55.7547595777471&AddressForm%5B1%5D%5Blongitude%5D=37.6487705111504&AddressForm%5B1%5D%5BaddressName%5D=%D0%9F%D0%BE%D0%BA%D1%80%D0%BE%D0%B2%D1%81%D0%BA%D0%B8%D0%B9+%D0%B1%D1%83%D0%BB%D1%8C%D0%B2%D0%B0%D1%80%2C+11%D0%A11&AddressForm%5B1%5D%5BplaceName%5D=%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0&AddressForm%5B1%5D%5Bpoint%5D=QP6S8423480Z3066974&OrderForm%5BtariffClasses%5D%5B%5D=1&OrderForm%5BpreOrder%5D=&OrderForm%5BpreOrder%5D=0&OrderForm%5BdateField%5D=20.4.2025&OrderForm%5BhourField%5D=00&OrderForm%5BminuteField%5D=00&ServiceForm%5B274%5D%5Bid%5D=274&ServiceForm%5B274%5D%5Bparam%5D=&ServiceForm%5B322%5D%5Bid%5D=322&ServiceForm%5B322%5D%5Bparam%5D=&ServiceForm%5B196%5D%5Bid%5D=196&ServiceForm%5B465%5D%5Bid%5D=465&ServiceForm%5B223%5D%5Bid%5D=223&ServiceForm%5B288%5D%5Bid%5D=288&ServiceForm%5B255%5D%5Bid%5D=255&ServiceForm%5B394%5D%5Bid%5D=394&ServiceForm%5B394%5D%5Bparam%5D=&ServiceForm%5B448%5D%5Bid%5D=448&ServiceForm%5B448%5D%5Bparam%5D=&ServiceForm%5B536%5D%5Bid%5D=536&ServiceForm%5B536%5D%5Bparam%5D=&OrderForm%5Bphone2%5D=&OrderForm%5Bcashback%5D=&OrderForm%5Brem%5D=&OrderForm%5BsubTypeSource%5D=0"
-
-    val value = runBlocking {
-        val response = client.post(url) {
+suspend fun GetOneOffer(config: TaxiConfig, viewModel: TripViewModel): TripOffer {
+    val client = HttpClient(CIO) {
+        install(ContentNegotiation) {
+            json(Json { ignoreUnknownKeys = true })
+        }
+    }
+    try {
+        Log.v("Bober response", "Making a request")
+        val response = client.request(config.url) {
+            if (config.method == "get") {
+                method = HttpMethod.Get
+            } else {
+                method = HttpMethod.Post
+            }
             headers {
-                append(HttpHeaders.Accept, "application/json, text/javascript, */*; q=0.01")
-                append(HttpHeaders.AcceptLanguage, "ru,en;q=0.9")
-                append(HttpHeaders.Connection, "keep-alive")
-                append(HttpHeaders.ContentType, "application/x-www-form-urlencoded; charset=UTF-8")
-                append(HttpHeaders.Cookie, cookies)
-                append(HttpHeaders.Origin, "https://client.taximaxim.ru")
-                append("Referer", "https://client.taximaxim.ru/ru/frame/?tax-id=yFL33BWu8yOEhqH0C0bV8BfGWKFjFba7Sxdwcdfppe71sHd4uxidkbS5%2B%2BYzBsW%2BiAH1yXFh2Na5bJdvZaNNTNRa6w%2BY1xpwqd1XUGEIcJc%3D&c=ru&l=ru&b=6&p=1&theme=maximV3&country=ru&city=6&fp=9b21c982-9748-4b93-b12c-a91ff42015e4&t=1")
-                append("Sec-Fetch-Dest", "empty")
-                append("Sec-Fetch-Mode", "cors")
-                append("Sec-Fetch-Site", "same-origin")
-                append(HttpHeaders.UserAgent, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 YaBrowser/24.10.0.0 Safari/537.36")
-                append("X-CSRF-Token", "2G3Izybek5SFX-nEcwZv7WjSRLXr5tIuv4OsBmTF1cuKP7iEH4ujzesUg7YENizeJuU2xt_RjV3Ox8lfCYqgpQ==")
-                append("X-Requested-With", "XMLHttpRequest")
-                append("sec-ch-ua", """ "Chromium";v="128", "Not;A=Brand";v="24", "YaBrowser";v="24.10", "Yowser";v="2.5" """)
-                append("sec-ch-ua-mobile", "?0")
-                append("sec-ch-ua-platform", """macOS""")
+                config.headers.forEach {
+                    append(it.name, it.value)
+                }
             }
             contentType(ContentType.Application.Json)
-            setBody(jsonBody)
+            if (config.body != "") {
+                setBody(config.body)
+            }
         }
-//            .body()
+        Log.v("Bober new", "ready to get response.bodyAsText()")
+        Log.v("Bober new", response.request.headers.toString())
+        Log.v("Bober new", response.request.content.toString())
+        Log.v("Bober new", response.bodyAsText())
 
-        Log.v("Bober", "ready to get response.bodyAsText()")
-        Log.v("Bober", response.request.headers.toString())
-        Log.v("Bober", response.request.content.toString())
-        Log.v("Bober", response.bodyAsText())
-        return@runBlocking response.bodyAsText()
-//        Log.v("Bober", response.price)
-//        return@runBlocking response.price.toInt()
+        val responseBody = response.bodyAsText()
+        Log.v("Bober response", response.toString())
+        Log.v("Bober response body", responseBody)
+
+        return OfferParser(responseBody, config, viewModel)
+    } finally {
+        client.close()
+    }
+}
+
+fun GetIconByName(name: String): Int {
+    return when (name.trim().lowercase()) {
+        "яндекс" -> R.drawable.yandex
+        "ситимобил" -> R.drawable.citimobil
+        "таксовичкофф" -> R.drawable.taksovichkof
+        "maxim" -> R.drawable.maxim
+        "omega" -> R.drawable.omega
+        else -> R.drawable.taxi
+    }
+}
+
+fun OfferParser(jsonString: String, config: TaxiConfig, viewModel: TripViewModel): TripOffer {
+    val root = JSONObject(jsonString)
+
+    val priceAny = getJsonValueByPath(root, config.pricePath)
+    val price = round(priceAny.toDouble()).toInt().toString()
+
+    val waitAny = if (config.waitTimePath.isNotEmpty()) getJsonValueByPath(root, config.waitTimePath) else null
+    val wait = when (waitAny) {
+        is String -> round(waitAny.toDouble()/60).toInt().toString()
+        else -> null
     }
 
-    Log.v("Bober", value.toString())
-    return value
+    if (config.name == "Яндекс") {
+        FillExtendedInfo(root, config, viewModel)
+    }
+
+    return TripOffer(
+        iconResId = GetIconByName(config.name),
+        companyName = config.name,
+        price = price,
+        tripTime = wait
+    )
 }
+
+fun getJsonValueByPath(jsonObject: JSONObject, path: String): String {
+    if (path.isEmpty()) return jsonObject.toString()
+    var root: Any = jsonObject
+    var result: String = ""
+    val parts = path.split('/')
+    for (part in parts) {
+        Log.v("Bober parsing", "part " + part.toString() + " root " + root.toString())
+        if (part.startsWith('[')) {
+            if (root is JSONObject) {
+                root = root.getJSONArray(part.substring(1, part.length - 1))
+            }
+            if (root is JSONArray && part.toIntOrNull() != null) {
+                root = root.getJSONArray(part.substring(1, part.length - 1).toInt())
+            }
+        } else if (part.startsWith('!')) {
+            if (root is JSONObject) {
+                result = root.getString(part.substring(1, part.length))
+            }
+            if (root is JSONArray && part.toIntOrNull() != null) {
+                result = root.getString(part.substring(1, part.length).toInt())
+            }
+        } else {
+            if (root is JSONObject) {
+                root = root.getJSONObject(part)
+            }
+            if (root is JSONArray && part.toIntOrNull() != null) {
+                root = root.getJSONObject(part.toInt())
+            }
+        }
+    }
+    Log.v("Bober parsing result", root.toString())
+    return result
+}
+
+fun FillExtendedInfo(jsonObject: JSONObject, config: TaxiConfig, viewModel: TripViewModel) {
+    val departure = viewModel.request!!.departure.point
+    val arrival = viewModel.request!!.arrival.point
+    val timestamp = System.currentTimeMillis()
+    val distance = round(jsonObject.getDouble("distance")).toInt()
+    val duration = round(jsonObject.getDouble("time")).toInt()
+
+    viewModel.updateExtendedTripInfo(
+        ExtendedTripInfo(
+            departure,
+            arrival,
+            timestamp,
+            distance,
+            duration
+        )
+    )
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 fun GetTaxovichkoffOffer(): String {
     Log.v("Bober", "starting the request")
     val client = HttpClient(CIO) {
-//        install(ContentNegotiation) {
-//            json(Json { ignoreUnknownKeys = true })
-//        }
+        install(ContentNegotiation) {
+            json(Json { ignoreUnknownKeys = true })
+        }
     }
     Log.v("Bober", "created client")
 
+//    val value2 = runBlocking {
+//        val response = client.get("https://api.chucknorris.io/jokes/random") {}
+//        return@runBlocking response.bodyAsText()
+//    }
+//    return value2
 
     val url = "https://api.gruzovichkof.ru/3/calculator/prices?v=2"
 

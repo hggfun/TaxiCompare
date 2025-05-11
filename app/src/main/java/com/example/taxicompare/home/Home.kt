@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import com.example.taxicompare.R
 import com.example.taxicompare.carsharing.CarsharingScreen
 import com.example.taxicompare.kicksharing.KicksharingScreen
+import com.example.taxicompare.model.UserRequest
 import com.example.taxicompare.navigation.BottomNavItem
 import com.example.taxicompare.navigation.MakeBottomNavigation
 import com.example.taxicompare.ui.theme.TaxiCompareTheme
@@ -44,7 +45,7 @@ import com.yandex.mapkit.MapKitFactory
 
 
 @Composable
-fun HomeScreen(onNavigateToTripDetails: (String, String) -> Unit) {
+fun HomeScreen(onNavigateToTripDetails: (String, String, UserRequest) -> Unit) {
     var selectedItem by remember { mutableStateOf<BottomNavItem>(BottomNavItem.Taxi) }
 
     TaxiCompareTheme {
@@ -67,7 +68,7 @@ fun HomeScreen(onNavigateToTripDetails: (String, String) -> Unit) {
 @Composable
 fun TaxiScreen(
     innerPadding: PaddingValues,
-    onNavigateToTripDetails: (String, String) -> Unit
+    onNavigateToTripDetails: (String, String, UserRequest) -> Unit
 ) {
     Column(modifier = Modifier.padding(innerPadding)) {
         SettingsRow()

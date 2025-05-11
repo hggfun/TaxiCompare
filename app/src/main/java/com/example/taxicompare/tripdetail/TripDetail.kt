@@ -93,8 +93,10 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
+import com.example.taxicompare.api.GetConfigs
 import com.example.taxicompare.api.GetPricePredict
 import com.example.taxicompare.cache.PricePredictionRepository
+import com.example.taxicompare.model.UserRequest
 
 //@Preview
 //@Composable
@@ -104,16 +106,15 @@ import com.example.taxicompare.cache.PricePredictionRepository
 
 @Composable
 fun TripDetailScreen(
-    departure: String,
-    arrival: String,
+    request: UserRequest,
     viewModel: TripViewModel
 ) {
     TaxiCompareTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             Column(modifier = Modifier.padding(innerPadding)) {
-                DepartureArrival(departure, arrival)
+                DepartureArrival(request.departure.name, request.arrival.name)
                 Spacer(modifier = Modifier.padding(12.dp))
-                MakeTripDetailScreen(viewModel)
+                MakeTripDetailScreen(request, viewModel)
             }
         }
     }
@@ -121,9 +122,15 @@ fun TripDetailScreen(
 
 @Composable
 fun MakeTripDetailScreen(
+    request: UserRequest,
     viewModel: TripViewModel
 ) {
-    val tripOffers: List<TripOffer> = GetOffers()
+    var tripOffers by remember { mutableStateOf(emptyList<TripOffer>()) }
+//    val tripOffers: List<TripOffer> = GetOffers()
+    LaunchedEffect(true) {
+        val configs = GetConfigs(request)
+        tripOffers = GetOffers(configs, viewModel)
+    }
     LazyColumn {
         items(tripOffers) { tripOffer ->
             TripCard(
@@ -142,7 +149,7 @@ fun TripCard(
     iconResId: Int, // Resource ID for the image/icon
     companyName: String,
     price: String,
-    tripTime: String,
+    tripTime: String?,
     viewModel: TripViewModel
 ) {
     var showSheet by remember { mutableStateOf(false) }
@@ -164,7 +171,9 @@ fun TripCard(
             Column {
                 Text(companyName, style = MaterialTheme.typography.titleMedium)
                 Text("Цена: $price рублей", style = MaterialTheme.typography.bodyMedium)
-                Text("Время подачи: $tripTime минут", style = MaterialTheme.typography.bodyMedium)
+                if (!tripTime.isNullOrEmpty()) {
+                    Text("Время подачи: $tripTime минут", style = MaterialTheme.typography.bodyMedium)
+                }
             }
         }
     }

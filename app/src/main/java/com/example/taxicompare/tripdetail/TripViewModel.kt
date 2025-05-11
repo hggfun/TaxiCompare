@@ -11,6 +11,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.taxicompare.api.GetPricePredict
 import com.example.taxicompare.cache.PricePredictionRepository
+import com.example.taxicompare.model.ExtendedTripInfo
+import com.example.taxicompare.model.UserRequest
 import kotlinx.coroutines.launch
 
 class TripViewModel(
@@ -21,8 +23,22 @@ class TripViewModel(
 
     fun loadPredictions() {
         viewModelScope.launch {
-            prices = repository.getPredictCache() { GetPricePredict() }
+            prices = repository.getPredictCache() { GetPricePredict(this@TripViewModel) }
         }
+    }
+
+    var request: UserRequest? by mutableStateOf(null)
+        private set
+
+    fun setUserRequest(userRequest: UserRequest) {
+        request = userRequest
+    }
+
+    var extendedTripInfo: ExtendedTripInfo? by mutableStateOf(null)
+        private set
+
+    fun updateExtendedTripInfo(tripInfo: ExtendedTripInfo) {
+        extendedTripInfo = tripInfo
     }
 }
 

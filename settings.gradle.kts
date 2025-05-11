@@ -17,6 +17,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven("https://maven.google.com/")
+        maven("https://artifactory-external.vkpartner.ru/artifactory/maps-sdk-android/")
     }
 }
 
