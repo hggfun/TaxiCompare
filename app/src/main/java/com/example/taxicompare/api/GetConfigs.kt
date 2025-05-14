@@ -63,10 +63,10 @@ fun MakePlaceholders(jsonObject: JSONObject, request: UserRequest): Map<String, 
 
 
     var replacements = mutableMapOf<String, String>()
-    replacements["departure_x"] = request.departure.point.latitude.toString()
-    replacements["departure_y"] = request.departure.point.longitude.toString()
-    replacements["arrival_x"] = request.arrival.point.latitude.toString()
-    replacements["arrival_y"] = request.arrival.point.longitude.toString()
+    replacements["departure_x"] = request.departure.point.longitude.toString()
+    replacements["departure_y"] = request.departure.point.latitude.toString()
+    replacements["arrival_x"] = request.arrival.point.longitude.toString()
+    replacements["arrival_y"] = request.arrival.point.latitude.toString()
     replacements["tariff"] = tariffs.getString(request.tariff)
     replacements["timestamp"] = System.currentTimeMillis().toString()
 

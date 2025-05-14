@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 
 data class UserRequest(
-    val location: Point,
+    val location: Point?,
     val arrival: Address,
     val departure: Address,
     val tariff: Int

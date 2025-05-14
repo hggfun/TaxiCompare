@@ -22,6 +22,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -52,202 +53,13 @@ import com.example.taxicompare.api.Request
 import com.example.taxicompare.model.Address
 import com.example.taxicompare.model.UserRequest
 import com.example.taxicompare.model.Point
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.collections.isNotEmpty
 
 enum class FieldType {
     DEPARTURE, ARRIVAL
-}
-
-fun attemptNavigation(
-    departureText: String,
-    arrivalText: String,
-    keyboardController: SoftwareKeyboardController?,
-    onNavigateToTripDetails: (String, String, UserRequest) -> Unit
-) {
-    if (departureText.isNotBlank() && arrivalText.isNotBlank()) {
-        keyboardController?.hide()
-        // TODO normal user request
-        val userRequest = UserRequest(
-            location = Point(1.0, 1.0),
-            departure = Address("test_name", Point(55.751591, 37.714939)),
-            arrival = Address("test_name", Point(55.753975, 37.648425)),
-            tariff = 0
-        )
-        onNavigateToTripDetails(departureText, arrivalText, userRequest)
-    }
-}
-
-fun attemptNavigation(
-    departure: Address,
-    arrival: Address,
-    keyboardController: SoftwareKeyboardController?,
-    onNavigateToTripDetails: (String, String, UserRequest) -> Unit
-) {
-    if (departure.name.isNotBlank() && arrival.name.isNotBlank()) {
-        keyboardController?.hide()
-        // TODO normal user request
-        val userRequest = UserRequest(
-            location = Point(1.0, 1.0),
-            departure = departure,
-            arrival = arrival,
-            tariff = 0
-        )
-        onNavigateToTripDetails(departure.name, arrival.name, userRequest)
-    }
-}
-
-@Composable
-fun DepartureArrivalCard(
-    departureText: String,
-    arrivalText: String,
-    onFocusChange: (FieldType) -> Unit,
-    onDepartureTextChange: (String) -> Unit,
-    onArrivalTextChange: (String) -> Unit,
-    onDepartureMapClick: () -> Unit,
-    onArrivalMapClick: () -> Unit,
-    onDonePressed: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.padding(16.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            LocationInputField(
-                hint = "Departure",
-                text = departureText,
-                onFocusChange = { onFocusChange(FieldType.DEPARTURE) },
-                onTextChange = onDepartureTextChange,
-                onMapClick = onDepartureMapClick,
-                onDonePressed = onDonePressed
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            LocationInputField(
-                hint = "Arrival",
-                text = arrivalText,
-                onFocusChange = { onFocusChange(FieldType.ARRIVAL) },
-                onTextChange = onArrivalTextChange,
-                onMapClick = onArrivalMapClick,
-                onDonePressed = onDonePressed,
-                autofocus = true
-            )
-        }
-    }
-}
-
-@Composable
-fun RecentAddressCard(
-    recentAddresses: List<String>,
-    onAddressClick: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    if (recentAddresses.isEmpty()) return
-
-    Card(
-        modifier = modifier.padding(16.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Text(
-            text = "Последние поездки",
-            fontWeight = FontWeight.Bold,
-            fontSize = 24.sp,
-            modifier = Modifier.padding(16.dp)
-        )
-        recentAddresses.take(6).forEachIndexed { index, address ->
-            if (index > 0) {
-                HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray)
-            }
-            Text(
-                text = address,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onAddressClick(address) }
-                    .padding(vertical = 12.dp, horizontal = 16.dp),
-                fontSize = 14.sp,
-                color = Color.DarkGray
-            )
-        }
-    }
-}
-
-@Composable
-fun LocationInputField(
-    hint: String,
-    text: String,
-    onFocusChange: () -> Unit,
-    onTextChange: (String) -> Unit,
-    onMapClick: () -> Unit,
-    onDonePressed: () -> Unit,
-    autofocus: Boolean = false
-) {
-    val focusRequester = remember { FocusRequester() }
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    OutlinedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .onFocusChanged {
-                if (it.isFocused) {
-                    onFocusChange()
-                }
-            }
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 8.dp)
-        ) {
-            TextField(
-                value = text,
-                onValueChange = onTextChange,
-                placeholder = { Text(hint, color = Color.Gray.copy(alpha = 0.7f)) },
-                modifier = Modifier
-                    .weight(1f)
-                    .focusRequester(focusRequester),
-                singleLine = true,
-                colors = TextFieldDefaults.colors(
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    disabledContainerColor = MaterialTheme.colorScheme.surface,
-                    cursorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                ),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        keyboardController?.hide()
-                        onDonePressed()
-                    }
-                )
-            )
-
-            Text(
-                text = "on map",
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .padding(start = 12.dp)
-                    .padding(end = 12.dp)
-                    .clickable { onMapClick() }
-            )
-        }
-    }
-
-    LaunchedEffect(autofocus) {
-        if (autofocus) {
-            focusRequester.requestFocus()
-            delay(200L)
-            keyboardController?.show()
-        }
-    }
 }
 
 @Composable
@@ -331,14 +143,6 @@ fun AnimatedCardWithBottomSheet(
     onNavigateToTripDetails: (String, String, UserRequest) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-
-    var departureText by remember { mutableStateOf("") }
-    var arrivalText by remember { mutableStateOf("") }
-    var departure by remember { mutableStateOf<Address?>(null) }
-    var arrival by remember { mutableStateOf<Address?>(null) }
-    var focusedField by remember { mutableStateOf(FieldType.ARRIVAL) }
     var showSheet by remember { mutableStateOf(false) }
 
     AnimatedSearchCard(
@@ -352,32 +156,133 @@ fun AnimatedCardWithBottomSheet(
             modifier = Modifier
                 .fillMaxHeight(0.95f)
         ) {
-            DepartureArrivalCard(
-                departureText = departureText,
-                arrivalText = arrivalText,
-                onFocusChange = { fieldType -> focusedField = fieldType },
-                onDepartureTextChange = { departureText = it },
-                onArrivalTextChange = { arrivalText = it },
-                onDepartureMapClick = {
-                    // TODO: later implement choosing departure location from map
-                },
-                onArrivalMapClick = {
-                    // TODO: later implement choosing arrival location from map
-                },
-                onDonePressed = { attemptNavigation(departureText, arrivalText, keyboardController, onNavigateToTripDetails) },
-                modifier = Modifier.fillMaxWidth()
-            )
+            AddressSelection(onNavigateToTripDetails)
+        }
+    }
+}
 
-            RecentAddressCard(
-                recentAddresses = GetLastAddresses(),
-                onAddressClick = { address ->
-                    if (focusedField == FieldType.DEPARTURE) {
-                        departureText = address
-                    } else {
-                        arrivalText = address
+@Composable
+fun AddressSelection(
+    onAddressesSelected: (String, String, UserRequest) -> Unit
+) {
+    var departureInput by remember { mutableStateOf("") }
+    var arrivalInput by remember { mutableStateOf("") }
+    var departureAddr by remember { mutableStateOf<Address?>(null) }
+    var arrivalAddr by remember { mutableStateOf<Address?>(null) }
+
+    var focusedField by remember { mutableStateOf<FieldType?>(null) }
+    var suggestions by remember { mutableStateOf<List<Address>>(emptyList()) }
+    var loading by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    var searchJob by remember { mutableStateOf<Job?>(null) }
+
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        delay(200L)
+        focusRequester.requestFocus()
+    }
+
+    val (onDepartureValueChange, onDepartureFocusChanged) = addressFieldHandlers(
+        inputSetter = { departureInput = it },
+        addrSetter = { departureAddr = it },
+        fieldType = FieldType.DEPARTURE,
+        suggestionsSetter = { suggestions = it },
+        loadingSetter = { loading = it },
+        searchJobSetter = { searchJob = it },
+        coroutineScope = coroutineScope,
+        getInput = { departureInput },
+        prevJobProvider = { searchJob },
+        setFocusedField = { focusedField = it }
+    )
+
+    val (onArrivalValueChange, onArrivalFocusChanged) = addressFieldHandlers(
+        inputSetter = { arrivalInput = it },
+        addrSetter = { arrivalAddr = it },
+        fieldType = FieldType.ARRIVAL,
+        suggestionsSetter = { suggestions = it },
+        loadingSetter = { loading = it },
+        searchJobSetter = { searchJob = it },
+        coroutineScope = coroutineScope,
+        getInput = { arrivalInput },
+        prevJobProvider = { searchJob },
+        setFocusedField = { focusedField = it }
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = departureInput,
+            onValueChange = onDepartureValueChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .focusRequester(focusRequester)
+                .onFocusChanged(onDepartureFocusChanged),
+            singleLine = true,
+            label = { Text("Откуда") }
+        )
+        OutlinedTextField(
+            value = arrivalInput,
+            onValueChange = onArrivalValueChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 2.dp)
+                .onFocusChanged(onArrivalFocusChanged),
+            singleLine = true,
+            label = { Text("Куда") }
+        )
+
+        // Suggestion List (Below both fields)
+        if ((focusedField != null) && (loading || suggestions.isNotEmpty())) {
+            Column (
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                if (loading) {
+                    Row(Modifier.padding(20.dp)) {
+                        Spacer(Modifier.width(12.dp))
+                        Text("Ищем адреса")
+                    }
+                } else {
+                    suggestions.forEach { address ->
+                        Text(
+                            /*address.description + ", " + */address.name,
+                            modifier = Modifier
+                                .clickable {
+                                    if (focusedField == FieldType.DEPARTURE) {
+                                        departureInput = address.name
+                                        departureAddr = address
+                                    } else if (focusedField == FieldType.ARRIVAL) {
+                                        arrivalInput = address.name
+                                        arrivalAddr = address
+                                    }
+                                    suggestions = emptyList()
+                                    loading = false
+                                    if (arrivalAddr != null && departureAddr != null) {
+                                        onAddressesSelected(
+                                            arrivalAddr!!.name,
+                                            departureAddr!!.name,
+                                            UserRequest(
+                                                null,
+                                                arrivalAddr!!,
+                                                departureAddr!!,
+                                                0
+                                            )
+                                        )
+                                    }
+
+                                }
+                                .fillMaxWidth()
+                                .padding(20.dp)
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
                     }
                 }
-            )
+            }
         }
     }
 }

@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.taxicompare.BuildConfig
 import com.example.taxicompare.model.Point
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -116,4 +117,33 @@ fun MakeSearch(ref: String): Address {
         point = Point(pin.getDouble(0), pin.getDouble(1))
     )
     return result
+}
+
+suspend fun Request2(placeName: String): List<Address> {
+    val encodedAddress = URLEncoder.encode(placeName, StandardCharsets.UTF_8.toString())
+    val client = HttpClient(CIO) {}
+    val url = "https://geocode-maps.yandex.ru/v1/?apikey=${BuildConfig.GEOCODER_API_KEY}&geocode=${encodedAddress}&format=json\n"
+    val response = client.get(url)
+
+    val jsonObject = JSONObject(response.bodyAsText())
+    return ParseGeocoderAddresses(jsonObject)
+}
+
+fun ParseGeocoderAddresses(jsonObject: JSONObject): List<Address> {
+    val jsonAddresses = jsonObject.getJSONObject("response").getJSONObject("GeoObjectCollection").getJSONArray("featureMember")
+    Log.v("Bober ya geocoder parse", jsonAddresses.toString())
+    var addresses = arrayListOf<Address>()
+    for (index in 0 until jsonAddresses.length()) {
+        val jsonAddress = jsonAddresses.getJSONObject(index).getJSONObject("GeoObject")
+        val jsonPoint = jsonAddress.getJSONObject("Point")
+        val (latStr, longStr) = jsonPoint.getString("pos").split(" ")
+
+        val address = Address(
+            name = jsonAddress.getString("name"),
+//            description = jsonAddress.getString("description"),
+            point = Point(latStr.toDouble(), longStr.toDouble())
+        )
+        addresses.add(address)
+    }
+    return addresses
 }
