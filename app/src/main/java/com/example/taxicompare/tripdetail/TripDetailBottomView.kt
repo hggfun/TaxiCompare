@@ -204,7 +204,7 @@ fun PricePredictionCard(
 
     LaunchedEffect(true) {
         try {
-            viewModel.loadPredictions()
+            viewModel.loadPredictions(price)
         } catch (e: Exception) {
             errorMessage = "Failed to fetch prices: ${e.localizedMessage}"
         }
@@ -251,27 +251,17 @@ fun PricePredictionCard(
                 val betterPriceAhead = isBetterPricePredicted(prices, price)
                 val color = if (betterPriceAhead) Color.Green else Color.Red
 
-                OutlinedCard(
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                    border = BorderStroke(1.dp, color),
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .fillMaxWidth()
-                ) {
-                    Text(
-                        text = if (betterPriceAhead) "Можно подождать и цена будет ниже"
-                        else "Не стоит ждать, цена только вырстет",
-                        color = color,
-                        modifier = Modifier.padding(12.dp),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-
                 if (adWatched) {
+                    val text = if (betterPriceAhead) "Можно подождать и цена будет ниже"
+                    else "Не стоит ждать, цена только вырстет"
+                    MakeOutlinedCard(text, color) {}
                     PricePredictionChart(prices, price)
                 } else {
                     val app = LocalContext.current.applicationContext as App
-                    Button(onClick = { app.showAd{ adWatched = true } }) { }
+                    MakeOutlinedCard(
+                        "Просмотрите рекламу для получения прогноза цены",
+                        MaterialTheme.typography.bodyMedium.color
+                    ) { app.showAd{ adWatched = true } }
                 }
             }
         }
@@ -279,9 +269,25 @@ fun PricePredictionCard(
     }
 }
 
-//@Preview
-//@Composable
-//fun preview() {
-//    val redictionRepo = PricePredictionRepository(Unit)
-//    PricePredictionCard(iconResId = R.drawable.adv8, companyName = "Taxi Co 1", price = 240, tripTime = "15 min")
-//}
+@Composable
+fun MakeOutlinedCard(
+    text: String,
+    color: Color,
+    onClick: () -> Unit
+) {
+    OutlinedCard(
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        border = BorderStroke(1.dp, color),
+        onClick = onClick,
+        modifier = Modifier
+            .padding(top = 8.dp)
+            .fillMaxWidth()
+    ) {
+        Text(
+            text = text,
+            color = color,
+            modifier = Modifier.padding(12.dp),
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
+}

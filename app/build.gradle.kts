@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.ksp)
+    alias(libs.plugins.serialization)
 }
 
 android {
@@ -19,6 +20,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "MAPKIT_API_KEY", "\"${rootProject.ext["mapkitApiKey"]}\"")
+        buildConfigField("String", "GEOCODER_API_KEY", "\"${rootProject.ext["geocoderApiKey"]}\"")
         buildConfigField("String", "YA_TAXI_API_KEY", "\"${rootProject.ext["yaTaxiApiKey"]}\"")
         buildConfigField("String", "TAKSOVICHKOFF_API_KEY", "\"${rootProject.ext["taksovichkoffApiKey"]}\"")
     }

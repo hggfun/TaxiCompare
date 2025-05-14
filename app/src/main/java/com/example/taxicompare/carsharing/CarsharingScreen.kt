@@ -101,7 +101,7 @@ fun LocateCarsOnMap(
     GetCars().forEach { point ->
         var isTapped = remember { mutableStateOf(false) }
         map.mapObjects.addPlacemark().apply {
-            geometry = point
+            geometry = Point(point.latitude, point.longitude)
             setIcon(ImageProvider.fromResource(contex, R.drawable.car))
             addTapListener(mapObjectTapListener)
         }

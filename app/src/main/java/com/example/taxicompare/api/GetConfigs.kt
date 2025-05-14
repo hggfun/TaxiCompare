@@ -1,7 +1,6 @@
 package com.example.taxicompare.api
 
 import android.content.Context
-import com.yandex.mapkit.geometry.Point
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
@@ -12,6 +11,7 @@ import com.example.taxicompare.model.TaxiConfig
 import com.example.taxicompare.model.UserRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.request.get
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -24,44 +24,28 @@ import kotlinx.io.IOException
 import org.json.JSONArray
 import org.json.JSONObject
 
-//@Preview
-//@Composable
-//fun test() {
-//    val userRequest = UserRequest(
-//        location = Point(1.0, 1.0),
-//        departure = Address("test_name", Point(55.751591, 37.714939)),
-//        arrival = Address("test_name", Point(55.753975, 37.648425)),
-//        tariff = 0
-//    )
-//    val configs = runBlocking {
-//        return@runBlocking GetConfigs(userRequest)
-//    }
-//    for (config in configs) {
-//        Log.v("TestGetOffers", config.toString())
-//    }
-//
-//    val offers = runBlocking {
-//        return@runBlocking GetOffers(configs)
-//    }
-//
-//    for (offer in offers) {
-//        Log.v("TestGetOffers", offer.toString())
-//    }
-//}
-
 suspend fun GetConfigs(request: UserRequest): List<TaxiConfig> {
     var configs: JSONArray
 
-    val client = HttpClient(CIO)
+    val client = HttpClient(CIO) {
+        install(HttpRequestRetry) {
+            retryIf(
+                maxRetries = 5,
+                { request, response -> response.status.value/100 != 2}
+            )
+            exponentialDelay()
+        }
+    }
     try {
         val response: HttpResponse = client.get("http://130.193.59.88:8080/get-config") {
             contentType(ContentType.Application.Json)
             setBody("{\"type\": \"taxi\"}")
         }
-        configs = JSONObject(response.bodyAsText()).getJSONArray("configs")
+        Log.v("GetConfigs Info", response.bodyAsText())
+        configs = JSONArray(response.bodyAsText())
     } catch (e: Exception) {
-        Log.v("Ktor Request Error", e.localizedMessage)
-        configs = loadJSONFromAsset().getJSONArray("configs")
+        Log.v("GetConfigs Error", e.localizedMessage)
+        configs = loadJSONFromAsset()
     } finally {
         client.close()
     }
@@ -114,28 +98,6 @@ fun ParseTaxiConfig(jsonObject: JSONObject, request: UserRequest): TaxiConfig {
     return TaxiConfig(name, url, method, body, headers, pricePath, waitTimePath)
 }
 
-//fun ParseTaxiConfig2(jsonStr: String, replacements: Map<String, String>): TaxiConfig {
-//    val json = JSONObject(jsonStr)
-//
-//    // Extract fields
-//    val name = json.getString("name")
-//    val url = json.getString("url")
-//
-//    // Convert body (JSONObject) to string and replace placeholders
-//    val bodyJson = json.getJSONObject("body").toString()
-//    val body = ReplacePlaceholders(bodyJson, replacements)
-//
-//    // Process headers
-//    val headersArr = json.getJSONArray("headers")
-//    val headers = mutableListOf<RequestHeaders>()
-//    for (i in 0 until headersArr.length()) {
-//        val header = headersArr.getJSONObject(i)
-//        headers.add(RequestHeaders(header.getString("name"), header.getString("value")))
-//    }
-//
-//    return TaxiConfig(name, url, body, headers)
-//}
-
 fun ReplacePlaceholders(jsonObject: JSONObject, replacements: Map<String, String>): JSONObject {
     val input = jsonObject.toString()
 
@@ -145,28 +107,9 @@ fun ReplacePlaceholders(jsonObject: JSONObject, replacements: Map<String, String
     })
 }
 
-fun ReplacePlaceholders2(jsonObject: JSONObject, replacements: Map<String, String>): JSONObject {
-    val keys = jsonObject.keys()
-    while (keys.hasNext()) {
-        val key = keys.next()
-        val value = jsonObject.get(key)
-        Log.v("Bober key", value.toString())
-
-        if (value is String && value.startsWith("{{") && value.endsWith("}}")) {
-            val placeholder = value.substring(2, value.length - 2)
-            val actualValue = replacements[placeholder]
-            if (actualValue != null) {
-                jsonObject.put(key, actualValue)
-            }
-        }
-    }
-    return jsonObject
-}
-
-fun loadJSONFromAsset(): JSONObject {
+fun loadJSONFromAsset(): JSONArray {
     val testJson = """
-        {
-          "configs": [
+        [
             {
               "name": "Таксовичкофф",
               "url": "https://api.gruzovichkof.ru/3/calculator/prices?v=2",
@@ -281,9 +224,8 @@ fun loadJSONFromAsset(): JSONObject {
               "price": "[options]/0/!price",
               "waiting_time": "[options]/0/!waiting_time"
             }
-          ]
-        }
+        ]
     """.trimIndent()
-    return JSONObject(testJson)
+    return JSONArray(testJson)
 }
 

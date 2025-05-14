@@ -1,8 +1,7 @@
 package com.example.taxicompare.model
 
-import com.yandex.mapkit.geometry.Point
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
+
 
 data class TripOffer(
     val iconResId: Int,
@@ -13,8 +12,10 @@ data class TripOffer(
 
 @Serializable
 data class ExtendedTripInfo(
-    val departure: Point,
-    val arrival: Point,
+    val start_point_x: Double,
+    val start_point_y: Double,
+    val end_point_x: Double,
+    val end_point_y: Double,
     val timestamp: Long,
     val distance: Int,
     val duration: Int

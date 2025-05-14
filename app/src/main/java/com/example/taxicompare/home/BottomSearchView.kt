@@ -15,6 +15,8 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,10 +48,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.taxicompare.api.GetLastAddresses
+import com.example.taxicompare.api.Request
 import com.example.taxicompare.model.Address
 import com.example.taxicompare.model.UserRequest
-import com.yandex.mapkit.geometry.Point
+import com.example.taxicompare.model.Point
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 enum class FieldType {
     DEPARTURE, ARRIVAL
@@ -70,6 +75,25 @@ fun attemptNavigation(
             tariff = 0
         )
         onNavigateToTripDetails(departureText, arrivalText, userRequest)
+    }
+}
+
+fun attemptNavigation(
+    departure: Address,
+    arrival: Address,
+    keyboardController: SoftwareKeyboardController?,
+    onNavigateToTripDetails: (String, String, UserRequest) -> Unit
+) {
+    if (departure.name.isNotBlank() && arrival.name.isNotBlank()) {
+        keyboardController?.hide()
+        // TODO normal user request
+        val userRequest = UserRequest(
+            location = Point(1.0, 1.0),
+            departure = departure,
+            arrival = arrival,
+            tariff = 0
+        )
+        onNavigateToTripDetails(departure.name, arrival.name, userRequest)
     }
 }
 
@@ -230,7 +254,7 @@ fun LocationInputField(
 fun AnimatedSearchCard(
     onClick: () -> Unit
 ) {
-    val wordsList = listOf("Кремль", "Работа", "Университет", "Домой")
+    val wordsList = listOf("В Кремль", "На работу", "В университет", "Домой")
     var currentWordIndex by remember { mutableStateOf(0) }
     var visibleLettersCount by remember { mutableStateOf(0) }
     var isAppearing by remember { mutableStateOf(true) }
@@ -312,6 +336,8 @@ fun AnimatedCardWithBottomSheet(
 
     var departureText by remember { mutableStateOf("") }
     var arrivalText by remember { mutableStateOf("") }
+    var departure by remember { mutableStateOf<Address?>(null) }
+    var arrival by remember { mutableStateOf<Address?>(null) }
     var focusedField by remember { mutableStateOf(FieldType.ARRIVAL) }
     var showSheet by remember { mutableStateOf(false) }
 
@@ -324,7 +350,7 @@ fun AnimatedCardWithBottomSheet(
             onDismissRequest = { showSheet = false },
             sheetState = sheetState,
             modifier = Modifier
-                .fillMaxHeight(0.8f)
+                .fillMaxHeight(0.95f)
         ) {
             DepartureArrivalCard(
                 departureText = departureText,

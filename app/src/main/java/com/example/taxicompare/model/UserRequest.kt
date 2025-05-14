@@ -1,6 +1,7 @@
 package com.example.taxicompare.model
 
-import com.yandex.mapkit.geometry.Point
+import kotlinx.serialization.Serializable
+
 
 data class UserRequest(
     val location: Point,
@@ -12,4 +13,10 @@ data class UserRequest(
 data class Address(
     val name: String,
     val point: Point
+)
+
+@Serializable
+data class Point(
+    var latitude: Double,
+    var longitude: Double
 )

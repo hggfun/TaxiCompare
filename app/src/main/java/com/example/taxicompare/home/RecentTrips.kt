@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.example.taxicompare.api.GetLastTrips
 import com.example.taxicompare.model.Address
 import com.example.taxicompare.model.UserRequest
-import com.yandex.mapkit.geometry.Point
+import com.example.taxicompare.model.Point
 
 
 @Composable
@@ -71,7 +71,7 @@ fun RecentTripCard(
     )
     Card(
         modifier = Modifier
-            .width(200.dp)
+            .width(300.dp)
             .padding(8.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White,

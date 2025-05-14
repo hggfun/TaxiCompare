@@ -7,10 +7,10 @@ import com.example.taxicompare.model.TaxiConfig
 import com.example.taxicompare.model.TripOffer
 import com.example.taxicompare.testingdata.MakeStaticOffers
 import com.example.taxicompare.tripdetail.TripViewModel
-import com.yandex.mapkit.geometry.Point
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
 import io.ktor.client.request.post
@@ -80,6 +80,13 @@ suspend fun GetOneOffer(config: TaxiConfig, viewModel: TripViewModel): TripOffer
         install(ContentNegotiation) {
             json(Json { ignoreUnknownKeys = true })
         }
+        install(HttpRequestRetry) {
+            retryIf(
+                maxRetries = 5,
+                { request, response -> response.status.value/100 != 2}
+            )
+            exponentialDelay()
+        }
     }
     try {
         Log.v("Bober response", "Making a request")
@@ -108,7 +115,7 @@ suspend fun GetOneOffer(config: TaxiConfig, viewModel: TripViewModel): TripOffer
         Log.v("Bober response", response.toString())
         Log.v("Bober response body", responseBody)
 
-        return OfferParser(responseBody, config, viewModel)
+        return ParseOffers(responseBody, config, viewModel)
     } finally {
         client.close()
     }
@@ -125,7 +132,7 @@ fun GetIconByName(name: String): Int {
     }
 }
 
-fun OfferParser(jsonString: String, config: TaxiConfig, viewModel: TripViewModel): TripOffer {
+fun ParseOffers(jsonString: String, config: TaxiConfig, viewModel: TripViewModel): TripOffer {
     val root = JSONObject(jsonString)
 
     val priceAny = getJsonValueByPath(root, config.pricePath)
@@ -186,96 +193,19 @@ fun getJsonValueByPath(jsonObject: JSONObject, path: String): String {
 fun FillExtendedInfo(jsonObject: JSONObject, config: TaxiConfig, viewModel: TripViewModel) {
     val departure = viewModel.request!!.departure.point
     val arrival = viewModel.request!!.arrival.point
-    val timestamp = System.currentTimeMillis()
+    val timestamp = System.currentTimeMillis()/1000
     val distance = round(jsonObject.getDouble("distance")).toInt()
     val duration = round(jsonObject.getDouble("time")).toInt()
 
     viewModel.updateExtendedTripInfo(
         ExtendedTripInfo(
-            departure,
-            arrival,
+            departure.longitude,
+            departure.latitude,
+            arrival.longitude,
+            arrival.latitude,
             timestamp,
             distance,
             duration
         )
     )
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-fun GetTaxovichkoffOffer(): String {
-    Log.v("Bober", "starting the request")
-    val client = HttpClient(CIO) {
-        install(ContentNegotiation) {
-            json(Json { ignoreUnknownKeys = true })
-        }
-    }
-    Log.v("Bober", "created client")
-
-//    val value2 = runBlocking {
-//        val response = client.get("https://api.chucknorris.io/jokes/random") {}
-//        return@runBlocking response.bodyAsText()
-//    }
-//    return value2
-
-    val url = "https://api.gruzovichkof.ru/3/calculator/prices?v=2"
-
-    val unixTimestamp = System.currentTimeMillis()
-
-    val jsonBody = """{"loc":[{"lat":55.751591,"lng":37.714939},{"lat":55.753975,"lng":37.648425}],"paymentType":0,"date":$unixTimestamp,"ordertime":618,"carOptions":{"car_id":1,"passengers":0,"porters":null},"options":[]}"""
-
-    val value = runBlocking {
-        val response = client.post(url) {
-            headers {
-                append("accept", "application/json, text/plain, */*")
-                append("accept-language", "ru,en;q=0.9")
-                append("api-key", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbklkIjo1NiwiYmFzZVVybCI6Imh0dHBzOi8vYXBpLmdydXpvdmljaGtvZi5ydSJ9.hIKxaVXdJRGAkL42vCKJSaBoQ_m6xGkChHJh-7id9DQ")
-                append("content-type", "application/json")
-                append("origin", "https://msk.taxovichkof.ru")
-                append("priority", "u=1, i")
-                append("referer", "https://msk.taxovichkof.ru/")
-                append("sec-ch-ua", """"Chromium";v="128", "Not;A=Brand";v="24", "YaBrowser";v="24.10", "Yowser";v="2.5"""")
-                append("sec-ch-ua-mobile", "?0")
-                append("sec-ch-ua-platform", "macOS")
-                append("sec-fetch-dest", "empty")
-                append("sec-fetch-mode", "cors")
-                append("sec-fetch-site", "cross-site")
-                append("user-agent", """Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 YaBrowser/24.10.0.0 Safari/537.36""")
-            }
-            contentType(ContentType.Application.Json)
-            setBody(jsonBody)
-        }
-//            .body()
-
-        Log.v("Bober", "ready to get response.bodyAsText()")
-        Log.v("Bober", response.request.headers.toString())
-        Log.v("Bober", response.request.content.toString())
-        Log.v("Bober", response.bodyAsText())
-        return@runBlocking response.bodyAsText()
-//        Log.v("Bober", response.price)
-//        return@runBlocking response.price.toInt()
-    }
-
-    Log.v("Bober", value.toString())
-    return value
 }

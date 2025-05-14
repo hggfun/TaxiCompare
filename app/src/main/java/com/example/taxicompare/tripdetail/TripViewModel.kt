@@ -21,9 +21,9 @@ class TripViewModel(
     var prices by mutableStateOf<List<Int>>(emptyList())
         private set
 
-    fun loadPredictions() {
+    fun loadPredictions(price: Int) {
         viewModelScope.launch {
-            prices = repository.getPredictCache() { GetPricePredict(this@TripViewModel) }
+            prices = repository.getPredictCache() { GetPricePredict(this@TripViewModel, price) }
         }
     }
 

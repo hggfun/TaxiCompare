@@ -18,6 +18,15 @@ val MapkitApiKey: String = run {
     } else ""
 }
 
+val GeocoderApiKey: String = run {
+    val properties = Properties()
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        properties.load(FileInputStream(localPropertiesFile))
+        properties.getProperty("GEOCODER_API_KEY", "")
+    } else ""
+}
+
 val YaTaxiApiKey: String = run {
     val properties = Properties()
     val localPropertiesFile = rootProject.file("local.properties")
@@ -37,5 +46,6 @@ val TaksovichkoffApiKey: String = run {
 }
 
 ext["mapkitApiKey"] = MapkitApiKey
+ext["geocoderApiKey"] = GeocoderApiKey
 ext["yaTaxiApiKey"] = YaTaxiApiKey
 ext["taksovichkoffApiKey"] = TaksovichkoffApiKey
