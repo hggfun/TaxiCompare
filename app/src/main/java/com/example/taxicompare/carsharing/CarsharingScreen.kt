@@ -1,6 +1,10 @@
 package com.example.taxicompare.carsharing
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
@@ -39,8 +43,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import com.example.taxicompare.R
 import com.example.taxicompare.api.GetCars
+import com.example.taxicompare.api.fetchLocation
 import com.example.taxicompare.kicksharing.MakeByDistanceState
 import com.example.taxicompare.testingdata.MakeStaticCarsharingPrice
 import com.example.taxicompare.tripdetail.PricePredictionChart
@@ -113,19 +119,50 @@ fun LocateCarsOnMap(
         true
     }
 
+    val context = LocalContext.current
+    var location by remember { mutableStateOf(Point(55.7522, 37.6156)) }
+    var permissionGranted by remember { mutableStateOf(false) }
+
+    // Permission launcher
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        permissionGranted = granted
+    }
+
+    LaunchedEffect(Unit) {
+        val hasPermission = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (hasPermission) {
+            permissionGranted = true
+        } else {
+            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
+
+    LaunchedEffect(permissionGranted) {
+        if (permissionGranted) {
+            fetchLocation(context) { lat, lon ->
+                location = Point(lat, lon)
+            }
+        }
+    }
+
     map.move(
         CameraPosition(
-            Point(55.756776, 37.523334),
+            location,
             19.0f,
             150.0f,
             0.0f
         )
     )
 
-    GetCars().forEach { point ->
+    GetCars(location).forEach { point ->
         var isTapped = remember { mutableStateOf(false) }
         map.mapObjects.addPlacemark().apply {
-            geometry = Point(point.latitude, point.longitude)
+            geometry = point
             setIcon(ImageProvider.fromResource(contex, R.drawable.car))
             addTapListener(mapObjectTapListener)
         }

@@ -64,9 +64,7 @@ fun ParsePricePredict(jsonString: String): List<Int> {
     var result = mutableListOf<Int>()
     val diff = predictions.getDouble(0).toInt()
     for (index in 0 until predictions.length()) {
-        if (index % 3 == 0) {
-            result.add(predictions.getDouble(index).toInt() - diff)
-        }
+        result.add(predictions.getDouble(index).toInt() - diff)
     }
     return result
 }

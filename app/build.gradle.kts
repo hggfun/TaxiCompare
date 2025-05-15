@@ -84,4 +84,6 @@ dependencies {
     implementation(libs.gson)
 
     implementation(libs.mobileads)
+    implementation(libs.play.services.location)
+    implementation(libs.androidx.activity.compose.v1101)
 }

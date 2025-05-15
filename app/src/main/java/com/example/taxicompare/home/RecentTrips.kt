@@ -109,7 +109,7 @@ fun RecentTripCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(start = 16.dp, top = 16.dp, end = 16.dp)
         ) {
             Text(
                 text = trip.departure.name,
@@ -130,8 +130,6 @@ fun RecentTripCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-
-            Spacer(modifier = Modifier.height(4.dp))
 
             Text(
                 text = "Тариф: ${GetTariffText(trip.tariff)}",

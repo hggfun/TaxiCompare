@@ -25,10 +25,10 @@ fun MakeStaticKickharingPrice(): Int {
 }
 
 fun GetTariffText(index: Int): String {
-    val tariffs = listOf("Эконом", "Комфорт", "Кoмофорт плюс", "Бизнес")
+    val tariffs = listOf("Эконом", "Комфорт", "Кoмфорт плюс", "Бизнес")
     return tariffs[index]
 }
 
 fun GetTariffs(): List<String> {
-    return listOf("Эконом", "Комфорт", "Кoмофорт плюс", "Бизнес")
+    return listOf("Эконом", "Комфорт", "Кoмфорт плюс", "Бизнес")
 }

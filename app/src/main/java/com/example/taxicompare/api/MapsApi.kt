@@ -1,5 +1,8 @@
 package com.example.taxicompare.api
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.location.Location
 import com.example.taxicompare.model.Address
 
 import android.util.Log
@@ -22,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.taxicompare.BuildConfig
 import com.example.taxicompare.model.Point
+import com.google.android.gms.location.LocationServices
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRequestRetry
@@ -168,4 +172,23 @@ fun ParseGeocoderAddresses(jsonObject: JSONObject): List<Address> {
         addresses.add(address)
     }
     return addresses
+}
+
+@SuppressLint("MissingPermission")
+fun fetchLocation(
+    context: Context,
+    onLocationFetched: (latitude: Double, longitude: Double) -> Unit
+) {
+    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+    fusedLocationClient.lastLocation
+        .addOnSuccessListener { location ->
+            if (location != null) {
+                onLocationFetched(location.latitude, location.longitude)
+            } else {
+                onLocationFetched(0.0, 0.0)
+            }
+        }
+        .addOnFailureListener {
+            onLocationFetched(0.0, 0.0)
+        }
 }

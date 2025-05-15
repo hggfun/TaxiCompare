@@ -105,6 +105,7 @@ fun PricePredictionChart(
     val maxPrice = (allPrices.maxOrNull() ?: 100) + 50
     val minPrice = (allPrices.minOrNull() ?: 0) - 50
     val priceRange = (maxPrice - minPrice).takeIf { it != 0 } ?: 1
+    var previousNoted = -10
 
     Canvas(
         modifier = modifier
@@ -174,10 +175,14 @@ fun PricePredictionChart(
             Log.v("Bober chart2", "index: $index")
             Log.v("Bober chart", "index:$index, current:${predictions[index]}, min:$minPrice, max:$maxPrice, point:$point")
             if (
-                index == 0 ||
-                predictions[index] - 50 == minPrice ||
-                predictions[index] + 50 == maxPrice
+                previousNoted + 2 < index &&
+                (
+                        index == 0 ||
+                                predictions[index] - 50 == minPrice ||
+                                predictions[index] + 50 == maxPrice
+                        )
             ) {
+                previousNoted = index
                 drawCircle(
                     color = Color.White,
                     radius =6.dp.toPx(),
