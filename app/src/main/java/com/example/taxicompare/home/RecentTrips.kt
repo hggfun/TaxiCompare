@@ -28,6 +28,7 @@ import com.example.taxicompare.cache.TripEntity
 import com.example.taxicompare.model.Address
 import com.example.taxicompare.model.UserRequest
 import com.example.taxicompare.model.Point
+import com.example.taxicompare.testingdata.GetTariffText
 import com.example.taxicompare.tripdetail.TripViewModel
 
 
@@ -36,7 +37,10 @@ fun HorizontalCardList(
     viewModel: TripViewModel,
     onNavigateToTripDetails: (String, String, UserRequest) -> Unit
 ) {
-    val cardItems: List<TripEntity> = viewModel.trips.collectAsState().value.take(5)
+    val cardItems: List<TripEntity> = viewModel.trips.collectAsState()
+        .value
+        .distinctBy { Triple(it.departure, it.arrival, it.tariff)}
+        .take(5)
     Card(
         modifier = Modifier
             .padding(horizontal = 12.dp, vertical = 6.dp)
@@ -58,12 +62,16 @@ fun HorizontalCardList(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(cardItems) { item ->
-                    RecentTripCard(item, onNavigateToTripDetails)
+                    RecentTripCard(
+                        item,
+                        onNavigateToTripDetails,
+                        onValueChosen = {trip -> viewModel.saveTrip(trip.departure, trip.arrival, trip.tariff)}
+                    )
                 }
             }
         } else {
             Text(
-                text = "Здесь будут ваши последние пеоздки",
+                text = "Здесь будут ваши последние поездки",
                 modifier = Modifier.padding(16.dp)
             )
         }
@@ -74,7 +82,8 @@ fun HorizontalCardList(
 @Composable
 fun RecentTripCard(
     trip: TripEntity,
-    onNavigateToTripDetails: (String, String, UserRequest) -> Unit
+    onNavigateToTripDetails: (String, String, UserRequest) -> Unit,
+    onValueChosen: (TripEntity) -> Unit
 ) {
     val userRequest = UserRequest(
         location = Point(1.0, 1.0),
@@ -92,7 +101,10 @@ fun RecentTripCard(
         elevation = CardDefaults.cardElevation(
             defaultElevation = 4.dp
         ),
-        onClick = { onNavigateToTripDetails(trip.departure.name, trip.arrival.name, userRequest) }
+        onClick = {
+            onNavigateToTripDetails(trip.departure.name, trip.arrival.name, userRequest)
+            onValueChosen(trip)
+        }
     ) {
         Column(
             modifier = Modifier
@@ -115,6 +127,15 @@ fun RecentTripCard(
                 text = trip.arrival.name,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "Тариф: ${GetTariffText(trip.tariff)}",
+                fontSize = 12.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

@@ -65,7 +65,7 @@ fun BannerScreen(
             modifier = modifier,
             factory = {
                 bannerAdView.apply {
-                    bannerAdView.setAdUnitId("R-M-15092512-1")
+                    bannerAdView.setAdUnitId("demo-banner-yandex")
                     bannerAdView.setAdSize(BannerAdSize.fixedSize(this.context, maxWidth.value.toInt(), maxHeight.value.toInt()))
                     Log.v("Bober size", "${maxWidth.value.toInt()} * ${maxHeight.value.toInt()}")
                     val request = AdRequest.Builder().build()

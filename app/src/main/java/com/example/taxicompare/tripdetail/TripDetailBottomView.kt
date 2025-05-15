@@ -80,10 +80,6 @@ fun PricePredictionChart(
     val minPrice = (allPrices.minOrNull() ?: 0) - 10
     val priceRange = (maxPrice - minPrice).takeIf { it != 0 } ?: 1
 
-    // For readability, define padding
-    val verticalPadding = 32.dp
-    val horizontalPadding = 40.dp
-
     Canvas(
         modifier = modifier
             .fillMaxWidth()
@@ -249,7 +245,7 @@ fun PricePredictionCard(
                 }
 
                 val betterPriceAhead = isBetterPricePredicted(prices, price)
-                val color = if (betterPriceAhead) Color.Green else Color.Red
+                val color = if (betterPriceAhead) Color(0xFF2196F3) else Color.Red
 
                 if (adWatched) {
                     val text = if (betterPriceAhead) "Можно подождать и цена будет ниже"

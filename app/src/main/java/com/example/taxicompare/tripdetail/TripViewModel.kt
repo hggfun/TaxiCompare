@@ -59,9 +59,9 @@ class TripViewModel(
             _trips.value = tripsRepository.getTripsCache()
         }
     }
-    fun saveTrip(departure: Address, arrival: Address) {
+    fun saveTrip(departure: Address, arrival: Address, tariff: Int) {
         viewModelScope.launch {
-            tripsRepository.setTripsCache(departure, arrival)
+            tripsRepository.setTripsCache(departure, arrival, tariff)
             loadTrips()
         }
     }

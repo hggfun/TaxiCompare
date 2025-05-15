@@ -15,8 +15,8 @@ import androidx.room.TypeConverters
 class TripsRepository(private val dao: TripsDao) {
     suspend fun getTripsCache(): List<TripEntity> = dao.getTripsCache()
 
-    suspend fun setTripsCache(departure: Address, arrival: Address) {
-        dao.setTripsCache(TripEntity(departure = departure, arrival = arrival))
+    suspend fun setTripsCache(departure: Address, arrival: Address, tariff: Int) {
+        dao.setTripsCache(TripEntity(departure = departure, arrival = arrival, tariff = tariff))
     }
 }
 
@@ -26,7 +26,8 @@ data class TripEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val departure: Address,
-    val arrival: Address
+    val arrival: Address,
+    val tariff: Int
 )
 
 class AddressConverters {

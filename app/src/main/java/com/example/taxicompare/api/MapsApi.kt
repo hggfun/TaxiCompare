@@ -24,9 +24,13 @@ import com.example.taxicompare.BuildConfig
 import com.example.taxicompare.model.Point
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import org.json.JSONObject
 import java.lang.Thread.sleep
 import java.net.URLEncoder
@@ -121,13 +125,30 @@ fun MakeSearch(ref: String): Address {
 }
 
 suspend fun Request2(placeName: String): List<Address> {
-    val encodedAddress = URLEncoder.encode(placeName, StandardCharsets.UTF_8.toString())
-    val client = HttpClient(CIO) {}
-    val url = "https://geocode-maps.yandex.ru/v1/?apikey=${BuildConfig.GEOCODER_API_KEY}&geocode=${encodedAddress}&format=json\n"
-    val response = client.get(url)
+    val client = HttpClient(CIO) {
+        install(ContentNegotiation) {
+            json(Json { ignoreUnknownKeys = true })
+        }
+        install(HttpRequestRetry) {
+            retryIf(
+                maxRetries = 5,
+                { request, response -> response.status.value/100 != 2}
+            )
+            exponentialDelay()
+        }
+    }
 
-    val jsonObject = JSONObject(response.bodyAsText())
-    return ParseGeocoderAddresses(jsonObject)
+    val encodedAddress = URLEncoder.encode(placeName, StandardCharsets.UTF_8.toString())
+    val url = "https://geocode-maps.yandex.ru/v1/?apikey=${BuildConfig.GEOCODER_API_KEY}&geocode=${encodedAddress}&format=json\n"
+
+    try {
+        val response = client.get(url)
+        val jsonObject = JSONObject(response.bodyAsText())
+        return ParseGeocoderAddresses(jsonObject)
+    } finally {
+        client.close()
+    }
+    return emptyList()
 }
 
 fun ParseGeocoderAddresses(jsonObject: JSONObject): List<Address> {

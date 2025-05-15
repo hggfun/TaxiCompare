@@ -1,6 +1,7 @@
 package com.example.taxicompare.home
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,13 +12,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -55,6 +60,8 @@ import com.example.taxicompare.cache.TripEntity
 import com.example.taxicompare.model.Address
 import com.example.taxicompare.model.UserRequest
 import com.example.taxicompare.model.Point
+import com.example.taxicompare.testingdata.GetTariffText
+import com.example.taxicompare.testingdata.GetTariffs
 import com.example.taxicompare.tripdetail.TripViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -183,6 +190,7 @@ fun AddressSelection(
     var loading by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     var searchJob by remember { mutableStateOf<Job?>(null) }
+    var tariff by remember { mutableStateOf(0) }
 
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
@@ -251,10 +259,16 @@ fun AddressSelection(
             label = { Text("Куда") }
         )
 
+        SelectTariff(
+            0,
+            { tariff = it }
+        )
+
         if ((focusedField != null) && (loading || suggestions.isNotEmpty())) {
             Column (
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
             ) {
                 if (loading) {
                     Row(Modifier.padding(20.dp)) {
@@ -280,6 +294,7 @@ fun AddressSelection(
                                         viewModel.saveTrip(
                                             departureAddress!!,
                                             arrivalAddress!!,
+                                            tariff
                                         )
                                         onAddressesSelected(
                                             arrivalAddress!!.name,
@@ -288,7 +303,7 @@ fun AddressSelection(
                                                 null,
                                                 arrivalAddress!!,
                                                 departureAddress!!,
-                                                0
+                                                tariff
                                             )
                                         )
                                     }
@@ -302,6 +317,52 @@ fun AddressSelection(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SelectTariff(
+    selectedTariff: Int,
+    onTariffSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var tariffs = GetTariffs()
+    var expanded by remember { mutableStateOf(false) }
+    var selected by remember { mutableStateOf(selectedTariff) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = modifier
+            .padding(horizontal = 16.dp, vertical = 2.dp)
+    ) {
+        OutlinedTextField(
+            value = tariffs[selected],
+            onValueChange = {},
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+            readOnly = true,
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            singleLine = true
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            tariffs.forEachIndexed { index, name ->
+                DropdownMenuItem(
+                    text = { Text(name) },
+                    onClick = {
+                        onTariffSelected(index)
+                        expanded = false
+                        selected = index
+                    }
+                )
+                HorizontalDivider()
             }
         }
     }
