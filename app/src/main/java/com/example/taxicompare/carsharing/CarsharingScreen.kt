@@ -145,7 +145,7 @@ fun CarDetailsCard(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text("BelkaCar", style = MaterialTheme.typography.titleMedium)
-                        Text("Цена: от 27р/минута", style = MaterialTheme.typography.bodyMedium)
+                        Text("Цена: от 19₽/минута", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }

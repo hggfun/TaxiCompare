@@ -147,7 +147,7 @@ fun ScooterDetailsCard(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text("Urent", style = MaterialTheme.typography.titleMedium)
-                        Text("Price: от 9р/минута", style = MaterialTheme.typography.bodyMedium)
+                        Text("Price: от 9₽/минута", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }

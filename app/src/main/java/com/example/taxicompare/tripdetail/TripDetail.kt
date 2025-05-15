@@ -55,6 +55,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.runtime.LaunchedEffect
@@ -126,22 +128,49 @@ fun MakeTripDetailScreen(
     viewModel: TripViewModel
 ) {
     var tripOffers by remember { mutableStateOf(emptyList<TripOffer>()) }
-//    val tripOffers: List<TripOffer> = GetOffers()
     LaunchedEffect(true) {
         val configs = GetConfigs(request)
         tripOffers = GetOffers(configs, viewModel)
     }
-    LazyColumn {
-        items(tripOffers) { tripOffer ->
-            TripCard(
-                iconResId = tripOffer.iconResId,
-                companyName = tripOffer.companyName,
-                price = tripOffer.price,
-                tripTime = tripOffer.tripTime,
-                viewModel
+
+    val minPrice = tripOffers.minOfOrNull { it.price.toInt() }
+    val minTime = tripOffers
+        .filter { !it.tripTime.isNullOrEmpty() }
+        .minOfOrNull { it.tripTime!!.toInt() }
+
+    if (tripOffers.isEmpty()) {
+        Card(
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = "Ищем лучшие предложения...",
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(16.dp)
             )
         }
+    } else {
+        LazyColumn () {
+            items(tripOffers) { tripOffer ->
+                val isCheapest = tripOffer.price.toInt() == minPrice
+                val isFastest = tripOffer.tripTime?.toIntOrNull() == minTime
+
+                TripCard(
+                    iconResId = tripOffer.iconResId,
+                    companyName = tripOffer.companyName,
+                    price = tripOffer.price,
+                    tripTime = tripOffer.tripTime,
+                    viewModel = viewModel,
+                    isCheapest = isCheapest,
+                    isFastest = isFastest
+                )
+            }
+        }
     }
+
+
 }
 
 @Composable
@@ -150,15 +179,20 @@ fun TripCard(
     companyName: String,
     price: String,
     tripTime: String?,
-    viewModel: TripViewModel
+    viewModel: TripViewModel,
+    isCheapest: Boolean,
+    isFastest: Boolean
 ) {
     var showSheet by remember { mutableStateOf(false) }
 
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
         onClick = { showSheet = true }
     ) {
+        TripCardLabels(isCheapest, isFastest)
         Row(modifier = Modifier.padding(16.dp)) {
             Image(
                 painter = painterResource(iconResId),
@@ -170,7 +204,7 @@ fun TripCard(
             Spacer(modifier = Modifier.width(12.dp))
             Column {
                 Text(companyName, style = MaterialTheme.typography.titleMedium)
-                Text("Цена: $price рублей", style = MaterialTheme.typography.bodyMedium)
+                Text("Цена: $price₽", style = MaterialTheme.typography.bodyMedium)
                 if (!tripTime.isNullOrEmpty()) {
                     Text("Время подачи: $tripTime минут", style = MaterialTheme.typography.bodyMedium)
                 }
@@ -229,6 +263,62 @@ fun DepartureArrival(
                 fontSize = 16.sp,
                 textAlign = TextAlign.Left
             )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun test() {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        TripCardLabels(true, true)
+        TripCardLabels(false, true)
+        TripCardLabels(true, false)
+        TripCardLabels(false, false)
+    }
+}
+
+@Composable
+fun TripCardLabels(
+    isCheapest: Boolean,
+    isFastest: Boolean
+) {
+    Row {
+        if (isCheapest) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF4CAF50)),
+                modifier = Modifier
+                    .padding(start = 8.dp, end = 8.dp, top = 8.dp)
+                    .wrapContentWidth(),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(2.dp)
+            ) {
+                Text(
+                    text = "самый дешевый",
+                    color = Color.White,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 1
+                )
+            }
+        }
+        if (isFastest) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF2196F3)),
+                modifier = Modifier
+                    .padding(start = 8.dp, end = 8.dp, top = 8.dp)
+                    .wrapContentWidth(),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(2.dp)
+            ) {
+                Text(
+                    text = "самый быстрый",
+                    color = Color.White,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 1
+                )
+            }
         }
     }
 }

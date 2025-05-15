@@ -66,7 +66,11 @@ suspend fun GetOffers(configs: List<TaxiConfig>, viewModel: TripViewModel): List
     }.awaitAll().filterNotNull()
 
     val staticOffers: List<TripOffer> = if (dynamicOffers.isNotEmpty()) {
-        val priceInt = dynamicOffers.first().price.toIntOrNull() ?: 200
+        val priceInt = dynamicOffers
+            .mapNotNull { it.price.toDoubleOrNull() }
+            .average()
+            .takeIf { !it.isNaN() }
+            ?.toInt() ?: 200
         MakeStaticOffers(priceInt)
     } else {
         emptyList()

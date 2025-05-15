@@ -240,7 +240,7 @@ fun PricePredictionCard(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(companyName, style = MaterialTheme.typography.titleMedium)
-                            Text("Цена: $price рублей", style = MaterialTheme.typography.bodyMedium)
+                            Text("Цена: $price₽", style = MaterialTheme.typography.bodyMedium)
                             if (!tripTime.isNullOrEmpty()) {
                                 Text("Время подачи: $tripTime минут", style = MaterialTheme.typography.bodyMedium)
                             }
