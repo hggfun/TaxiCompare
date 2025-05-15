@@ -114,6 +114,7 @@ fun MakeSearch(ref: String): Address {
     val pin = value.getJSONArray("pin")
     var result = Address(
         name = value.getString("address"),
+        description = "description",
         point = Point(pin.getDouble(0), pin.getDouble(1))
     )
     return result
@@ -140,7 +141,7 @@ fun ParseGeocoderAddresses(jsonObject: JSONObject): List<Address> {
 
         val address = Address(
             name = jsonAddress.getString("name"),
-//            description = jsonAddress.getString("description"),
+            description = jsonAddress.getString("description"),
             point = Point(latStr.toDouble(), longStr.toDouble())
         )
         addresses.add(address)

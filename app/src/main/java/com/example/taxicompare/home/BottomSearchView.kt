@@ -34,6 +34,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -50,9 +51,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.taxicompare.api.GetLastAddresses
 import com.example.taxicompare.api.Request
+import com.example.taxicompare.cache.TripEntity
 import com.example.taxicompare.model.Address
 import com.example.taxicompare.model.UserRequest
 import com.example.taxicompare.model.Point
+import com.example.taxicompare.tripdetail.TripViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -101,7 +104,7 @@ fun AnimatedSearchCard(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 12.dp, vertical = 6.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
             onClick = onClick
@@ -140,6 +143,7 @@ fun AnimatedSearchCard(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnimatedCardWithBottomSheet(
+    viewModel: TripViewModel,
     onNavigateToTripDetails: (String, String, UserRequest) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -156,19 +160,23 @@ fun AnimatedCardWithBottomSheet(
             modifier = Modifier
                 .fillMaxHeight(0.95f)
         ) {
-            AddressSelection(onNavigateToTripDetails)
+            AddressSelection(
+                viewModel,
+                onNavigateToTripDetails
+            )
         }
     }
 }
 
 @Composable
 fun AddressSelection(
+    viewModel: TripViewModel,
     onAddressesSelected: (String, String, UserRequest) -> Unit
 ) {
     var departureInput by remember { mutableStateOf("") }
     var arrivalInput by remember { mutableStateOf("") }
-    var departureAddr by remember { mutableStateOf<Address?>(null) }
-    var arrivalAddr by remember { mutableStateOf<Address?>(null) }
+    var departureAddress by remember { mutableStateOf<Address?>(null) }
+    var arrivalAddress by remember { mutableStateOf<Address?>(null) }
 
     var focusedField by remember { mutableStateOf<FieldType?>(null) }
     var suggestions by remember { mutableStateOf<List<Address>>(emptyList()) }
@@ -182,9 +190,16 @@ fun AddressSelection(
         focusRequester.requestFocus()
     }
 
+    val recentTrips: List<TripEntity> = viewModel.trips.collectAsState().value
+    val recentAddresses: List<Address> = recentTrips
+        .flatMap { listOf(it.departure, it.arrival) }  // Flatten all addresses
+        .distinct()                                    // Unique addresses only
+        .take(5)                                       // Max 5 items
+        .toMutableList()
+
     val (onDepartureValueChange, onDepartureFocusChanged) = addressFieldHandlers(
         inputSetter = { departureInput = it },
-        addrSetter = { departureAddr = it },
+        addressSetter = { departureAddress = it },
         fieldType = FieldType.DEPARTURE,
         suggestionsSetter = { suggestions = it },
         loadingSetter = { loading = it },
@@ -192,12 +207,13 @@ fun AddressSelection(
         coroutineScope = coroutineScope,
         getInput = { departureInput },
         prevJobProvider = { searchJob },
-        setFocusedField = { focusedField = it }
+        setFocusedField = { focusedField = it },
+        recentAddresses = recentAddresses
     )
 
     val (onArrivalValueChange, onArrivalFocusChanged) = addressFieldHandlers(
         inputSetter = { arrivalInput = it },
-        addrSetter = { arrivalAddr = it },
+        addressSetter = { arrivalAddress = it },
         fieldType = FieldType.ARRIVAL,
         suggestionsSetter = { suggestions = it },
         loadingSetter = { loading = it },
@@ -205,7 +221,8 @@ fun AddressSelection(
         coroutineScope = coroutineScope,
         getInput = { arrivalInput },
         prevJobProvider = { searchJob },
-        setFocusedField = { focusedField = it }
+        setFocusedField = { focusedField = it },
+        recentAddresses = recentAddresses
     )
 
     Column(
@@ -234,7 +251,6 @@ fun AddressSelection(
             label = { Text("Куда") }
         )
 
-        // Suggestion List (Below both fields)
         if ((focusedField != null) && (loading || suggestions.isNotEmpty())) {
             Column (
                 modifier = Modifier
@@ -243,31 +259,35 @@ fun AddressSelection(
                 if (loading) {
                     Row(Modifier.padding(20.dp)) {
                         Spacer(Modifier.width(12.dp))
-                        Text("Ищем адреса")
+                        Text("Ищем адреса...")
                     }
                 } else {
                     suggestions.forEach { address ->
                         Text(
-                            /*address.description + ", " + */address.name,
+                            address.description + ", " + address.name,
                             modifier = Modifier
                                 .clickable {
                                     if (focusedField == FieldType.DEPARTURE) {
                                         departureInput = address.name
-                                        departureAddr = address
+                                        departureAddress = address
                                     } else if (focusedField == FieldType.ARRIVAL) {
                                         arrivalInput = address.name
-                                        arrivalAddr = address
+                                        arrivalAddress = address
                                     }
                                     suggestions = emptyList()
                                     loading = false
-                                    if (arrivalAddr != null && departureAddr != null) {
+                                    if (arrivalAddress != null && departureAddress != null) {
+                                        viewModel.saveTrip(
+                                            departureAddress!!,
+                                            arrivalAddress!!,
+                                        )
                                         onAddressesSelected(
-                                            arrivalAddr!!.name,
-                                            departureAddr!!.name,
+                                            arrivalAddress!!.name,
+                                            departureAddress!!.name,
                                             UserRequest(
                                                 null,
-                                                arrivalAddr!!,
-                                                departureAddr!!,
+                                                arrivalAddress!!,
+                                                departureAddress!!,
                                                 0
                                             )
                                         )
@@ -285,12 +305,4 @@ fun AddressSelection(
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun AnimatedCardScreen2() {
-    AnimatedCardWithBottomSheet(
-        onNavigateToTripDetails = {a, b, c -> a + b}
-    )
 }

@@ -12,6 +12,7 @@ data class UserRequest(
 
 data class Address(
     val name: String,
+    val description: String,
     val point: Point
 )
 

@@ -16,6 +16,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -23,19 +24,25 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.taxicompare.api.GetLastTrips
+import com.example.taxicompare.cache.TripEntity
 import com.example.taxicompare.model.Address
 import com.example.taxicompare.model.UserRequest
 import com.example.taxicompare.model.Point
+import com.example.taxicompare.tripdetail.TripViewModel
 
 
 @Composable
-fun HorizontalCardList(onNavigateToTripDetails: (String, String, UserRequest) -> Unit) {
-    val cardItems = GetLastTrips()
+fun HorizontalCardList(
+    viewModel: TripViewModel,
+    onNavigateToTripDetails: (String, String, UserRequest) -> Unit
+) {
+    val cardItems: List<TripEntity> = viewModel.trips.collectAsState().value.take(5)
     Card(
         modifier = Modifier
-            .padding(12.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            containerColor = MaterialTheme.colorScheme.surface,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -45,28 +52,34 @@ fun HorizontalCardList(onNavigateToTripDetails: (String, String, UserRequest) ->
             fontSize = 24.sp,
             modifier = Modifier.padding(16.dp)
         )
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(cardItems) { item ->
-                RecentTripCard(item.first, item.second, onNavigateToTripDetails)
+        if (cardItems.isNotEmpty()) {
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(cardItems) { item ->
+                    RecentTripCard(item, onNavigateToTripDetails)
+                }
             }
+        } else {
+            Text(
+                text = "Здесь будут ваши последние пеоздки",
+                modifier = Modifier.padding(16.dp)
+            )
         }
+
     }
 }
 
 @Composable
 fun RecentTripCard(
-    departure: String,
-    arrival: String,
+    trip: TripEntity,
     onNavigateToTripDetails: (String, String, UserRequest) -> Unit
 ) {
-    // TODO normal user request
     val userRequest = UserRequest(
         location = Point(1.0, 1.0),
-        departure = Address("test_name", Point(55.751591, 37.714939)),
-        arrival = Address("test_name", Point(55.753975, 37.648425)),
+        departure = trip.departure,
+        arrival = trip.arrival,
         tariff = 0
     )
     Card(
@@ -79,7 +92,7 @@ fun RecentTripCard(
         elevation = CardDefaults.cardElevation(
             defaultElevation = 4.dp
         ),
-        onClick = { onNavigateToTripDetails(departure, arrival, userRequest) }
+        onClick = { onNavigateToTripDetails(trip.departure.name, trip.arrival.name, userRequest) }
     ) {
         Column(
             modifier = Modifier
@@ -87,7 +100,7 @@ fun RecentTripCard(
                 .padding(16.dp)
         ) {
             Text(
-                text = departure,
+                text = trip.departure.name,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
                 maxLines = 1,
@@ -99,7 +112,7 @@ fun RecentTripCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = arrival,
+                text = trip.arrival.name,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
                 maxLines = 1,

@@ -1,5 +1,6 @@
 package com.example.taxicompare.home
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
@@ -40,13 +43,19 @@ import com.example.taxicompare.kicksharing.KicksharingScreen
 import com.example.taxicompare.model.UserRequest
 import com.example.taxicompare.navigation.BottomNavItem
 import com.example.taxicompare.navigation.MakeBottomNavigation
+import com.example.taxicompare.tripdetail.TripViewModel
 import com.example.taxicompare.ui.theme.TaxiCompareTheme
 import com.yandex.mapkit.MapKitFactory
 
 
 @Composable
-fun HomeScreen(onNavigateToTripDetails: (String, String, UserRequest) -> Unit) {
+fun HomeScreen(
+    viewModel: TripViewModel,
+    onNavigateToTripDetails: (String, String, UserRequest) -> Unit,
+    onNavigateToSettings: () -> Unit
+) {
     var selectedItem by remember { mutableStateOf<BottomNavItem>(BottomNavItem.Taxi) }
+    viewModel.loadTrips()
 
     TaxiCompareTheme {
         Scaffold(
@@ -57,7 +66,7 @@ fun HomeScreen(onNavigateToTripDetails: (String, String, UserRequest) -> Unit) {
             ) }
         ) { innerPadding ->
             when (selectedItem) {
-                BottomNavItem.Taxi -> TaxiScreen(innerPadding, onNavigateToTripDetails)
+                BottomNavItem.Taxi -> TaxiScreen(innerPadding, viewModel, onNavigateToTripDetails, onNavigateToSettings)
                 BottomNavItem.CarSharing -> CarsharingScreen()
                 BottomNavItem.KickSharing -> KicksharingScreen()
             }
@@ -68,18 +77,26 @@ fun HomeScreen(onNavigateToTripDetails: (String, String, UserRequest) -> Unit) {
 @Composable
 fun TaxiScreen(
     innerPadding: PaddingValues,
-    onNavigateToTripDetails: (String, String, UserRequest) -> Unit
+    viewModel: TripViewModel,
+    onNavigateToTripDetails: (String, String, UserRequest) -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
-    Column(modifier = Modifier.padding(innerPadding)) {
-        SettingsRow()
-        AnimatedCardWithBottomSheet(onNavigateToTripDetails)
-        HorizontalCardList(onNavigateToTripDetails)
+    Column(
+        modifier = Modifier
+            .padding(innerPadding)
+            .verticalScroll(rememberScrollState())
+    ) {
+        SettingsRow(onNavigateToSettings)
+        AnimatedCardWithBottomSheet(viewModel, onNavigateToTripDetails)
+        HorizontalCardList(viewModel, onNavigateToTripDetails)
         AdvertisementWidget()
     }
 }
 
 @Composable
-fun SettingsRow() {
+fun SettingsRow(
+    onNavigateToSettings: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -92,12 +109,13 @@ fun SettingsRow() {
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .weight(1f)
-                .padding(start = 8.dp) // Add some spacing between the icon and text
+                .padding(start = 8.dp)
         )
 
         IconButton(
             onClick = {
-                // Handle the gear button click action
+                Log.v("Bober settings", "button settings screen")
+                onNavigateToSettings()
             }
         ) {
             Icon(

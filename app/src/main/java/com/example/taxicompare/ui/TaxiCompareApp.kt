@@ -78,7 +78,9 @@ class App : Application() {
             this,
             AppDatabase::class.java,
             "database"
-        ).build()
+        )
+            .fallbackToDestructiveMigration(true)
+            .build()
 
         rewardedAdLoader = RewardedAdLoader(this).apply {
             setAdLoadListener(object: RewardedAdLoadListener {

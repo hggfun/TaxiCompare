@@ -1,4 +1,5 @@
 package com.example.taxicompare.navigation
+import android.util.Log
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
@@ -24,6 +25,8 @@ import androidx.navigation.navArgument
 import androidx.room.Room
 import com.example.taxicompare.cache.AppDatabase
 import com.example.taxicompare.cache.PricePredictionRepository
+import com.example.taxicompare.cache.TripsRepository
+import com.example.taxicompare.home.SettingsScreen
 import com.example.taxicompare.tripdetail.TripViewModel
 import com.example.taxicompare.tripdetail.TripViewModelFactory
 import io.ktor.client.request.request
@@ -32,17 +35,25 @@ import io.ktor.client.request.request
 fun NavigationControllerSetup(appDatabase: AppDatabase) {
     val navController = rememberNavController()
 
-    val repository = PricePredictionRepository(appDatabase.pricePredictionDao())
+    val pricePredictionRepository = PricePredictionRepository(appDatabase.pricePredictionDao())
+    val tripsRepository = TripsRepository(appDatabase.tripsDao())
     val viewModel: TripViewModel = viewModel(
-        factory = TripViewModelFactory(repository)
+        factory = TripViewModelFactory(
+            pricePredictionRepository,
+            tripsRepository
+        )
     )
 
     NavHost(navController = navController, startDestination = "location_entry") {
         composable("location_entry") {
-            HomeScreen { departure, arrival, request ->
-                viewModel.setUserRequest(request)
-                navController.navigate("trip_details/$departure/$arrival")
-            }
+            HomeScreen(
+                viewModel = viewModel,
+                onNavigateToTripDetails = { departure, arrival, request ->
+                    viewModel.setUserRequest(request)
+                    navController.navigate("trip_details/$departure/$arrival")
+                },
+                onNavigateToSettings = { navController.navigate("settings") }
+            )
         }
 
         composable(
@@ -56,6 +67,11 @@ fun NavigationControllerSetup(appDatabase: AppDatabase) {
             val arrival = backStackEntry.arguments?.getString("arrival") ?: ""
 
             TripDetailScreen(request = viewModel.request!!, viewModel = viewModel)
+        }
+
+        composable("settings") {
+            Log.v("Bober settings", "navigating settings screen")
+            SettingsScreen()
         }
     }
 }
