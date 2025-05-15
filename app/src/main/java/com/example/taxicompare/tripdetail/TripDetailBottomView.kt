@@ -1,5 +1,6 @@
 package com.example.taxicompare.tripdetail
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -68,54 +70,91 @@ import com.example.taxicompare.cache.PricePredictionRepository
 import com.example.taxicompare.ui.App
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+@Preview
+@Composable
+fun test3() {
+    Column {
+        Card(
+            Modifier
+                .padding(horizontal = 16.dp, vertical = 48.dp)
+                .wrapContentHeight()
+        ) {
+            PricePredictionChart(
+                listOf(500, 510, 520, 500),
+                500
+            )
+        }
+        PricePredictionChart(
+            listOf(0, 20, 22, 50, 52, 53, 56, 20, 10, 0, -15, -35).map { a -> a+500 },
+            500
+        )
+    }
+
+}
 
 @Composable
 fun PricePredictionChart(
     predictions: List<Int>,
     currentPrice: Int,
-    modifier: Modifier = Modifier.height(200.dp)
+    modifier: Modifier = Modifier.height(220.dp)
 ) {
     val allPrices = predictions + currentPrice
-    val maxPrice = (allPrices.maxOrNull() ?: 100) + 10
-    val minPrice = (allPrices.minOrNull() ?: 0) - 10
+    val maxPrice = (allPrices.maxOrNull() ?: 100) + 50
+    val minPrice = (allPrices.minOrNull() ?: 0) - 50
     val priceRange = (maxPrice - minPrice).takeIf { it != 0 } ?: 1
 
     Canvas(
         modifier = modifier
             .fillMaxWidth()
+            .height(220.dp)
             .padding(16.dp)
     ) {
-        val canvasWidth = size.width
-        val canvasHeight = size.height
+        // distance from borders of Canvas
+        val offset = 16.dp.toPx()
+        // chart real sizes
+        val chartWidth = size.width - offset * 2
+        val chartHeight = size.height - offset
+        // distance between Points on chart
+        val pointSpacing = chartWidth / (predictions.size - 1).coerceAtLeast(1)
 
-        // Draw Axes
-        drawLine(
-            color = Color.Gray,
-            start = Offset(0f, canvasHeight),
-            end = Offset(canvasWidth, canvasHeight),
-            strokeWidth = 2.dp.toPx()
-        )
+        val now = LocalDateTime.now()
+        val times = List(13) { index ->
+            now.plusMinutes(5L * index)
+        }
+        val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
-        drawLine(
-            color = Color.Gray,
-            start = Offset(0f, 0f),
-            end = Offset(0f, canvasHeight),
-            strokeWidth = 2.dp.toPx()
-        )
-
-        // Draw horizontal grid lines and price markers (vertical axis)
-        val textPaint = android.graphics.Paint().apply {
-            color = android.graphics.Color.DKGRAY
-            textAlign = android.graphics.Paint.Align.RIGHT
-            textSize = 50f
+        val labelPaint = android.graphics.Paint().apply {
+            color = android.graphics.Color.BLACK
+            textAlign = android.graphics.Paint.Align.CENTER
+            textSize = 48f
         }
 
+        for (i in 1 until 6) {
+            drawLine(
+                color = Color.LightGray,
+                start = Offset(0f, chartHeight / 6 * i),
+                end = Offset(chartWidth + offset * 2, chartHeight / 6 * i),
+                strokeWidth = (0.5).dp.toPx()
+            )
+        }
+
+
+//        drawLine(
+//            color = Color.Gray,
+//            start = Offset(0f, 0f),
+//            end = Offset(0f, chartHeight),
+//            strokeWidth = 2.dp.toPx()
+//        )
+
+
         // Calculate points positions
-        val pointSpacing = canvasWidth / (predictions.size - 1).coerceAtLeast(1)
         val points = predictions.mapIndexed { index, price ->
-            val x = index * pointSpacing
-            val yRatio = (price - minPrice).toFloat() / priceRange
-            val y = canvasHeight - (yRatio * canvasHeight)
+            val yRatio = (maxPrice - price).toFloat() / priceRange
+            val x = offset + index * pointSpacing
+            val y = chartHeight * yRatio
             Offset(x, y)
         }
 
@@ -131,50 +170,56 @@ fun PricePredictionChart(
         }
 
         // Draw circles and price labels on each point
-        val labelPaint = android.graphics.Paint().apply {
-            color = android.graphics.Color.BLACK
-            textAlign = android.graphics.Paint.Align.CENTER
-            textSize = 50f
-        }
-
         points.forEachIndexed { index, point ->
-            drawCircle(
-                color = Color.White,
-                radius =6.dp.toPx(),
-                center = point
-            )
-            drawCircle(
-                color = Color(0xFF6200EE),
-                radius = 4.dp.toPx(),
-                center = point
-            )
-
-            drawContext.canvas.nativeCanvas.drawText(
-                "${predictions[index]}",
-                point.x,
-                point.y - 10.dp.toPx(),
-                labelPaint
+            Log.v("Bober chart2", "index: $index")
+            Log.v("Bober chart", "index:$index, current:${predictions[index]}, min:$minPrice, max:$maxPrice, point:$point")
+            if (
+                index == 0 ||
+                predictions[index] - 50 == minPrice ||
+                predictions[index] + 50 == maxPrice
+            ) {
+                drawCircle(
+                    color = Color.White,
+                    radius =6.dp.toPx(),
+                    center = point
+                )
+                drawCircle(
+                    color = Color.Black,
+                    radius = 4.dp.toPx(),
+                    center = point
+                )
+                drawContext.canvas.nativeCanvas.drawText(
+                    "${predictions[index]}",
+                    point.x,
+                    point.y - 10.dp.toPx(),
+                    labelPaint
+                )
+                drawContext.canvas.nativeCanvas.drawText(
+                    times[index].format(timeFormatter),
+                    point.x,
+                    chartHeight + offset,
+                    labelPaint
+                )
+            }
+            drawLine(
+                color = Color.LightGray,
+                start = Offset(points[index].x, 0f),
+                end = Offset(points[index].x, chartHeight),
+                strokeWidth = (0.5).dp.toPx()
             )
         }
 
         // Draw current price dotted red line
-        val currentYRatio = (currentPrice - minPrice).toFloat() / priceRange
-        val currentY = canvasHeight - (currentYRatio * canvasHeight)
+        val currentYRatio = (maxPrice - currentPrice).toFloat() / priceRange
+        val currentY = chartHeight * currentYRatio
         val dashEffect = PathEffect.dashPathEffect(floatArrayOf(20f, 10f), 0f)
 
         drawLine(
             color = Color.Red,
             start = Offset(0f, currentY),
-            end = Offset(canvasWidth, currentY),
+            end = Offset(chartWidth + offset * 2, currentY),
             strokeWidth = 2.dp.toPx(),
             pathEffect = dashEffect
-        )
-
-        drawContext.canvas.nativeCanvas.drawText(
-            "Текущая: $currentPrice",
-            canvasWidth - 10.dp.toPx(),
-            currentY - 10f,
-            textPaint.apply { textAlign = android.graphics.Paint.Align.RIGHT }
         )
     }
 }
@@ -245,7 +290,7 @@ fun PricePredictionCard(
                 }
 
                 val betterPriceAhead = isBetterPricePredicted(prices, price)
-                val color = if (betterPriceAhead) Color(0xFF2196F3) else Color.Red
+                val color = if (betterPriceAhead) Color(0xFF4CAF50) else Color.Red
 
                 if (adWatched) {
                     val text = if (betterPriceAhead) "Можно подождать и цена будет ниже"

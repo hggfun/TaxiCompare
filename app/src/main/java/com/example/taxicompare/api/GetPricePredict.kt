@@ -51,7 +51,7 @@ suspend fun GetPricePredict(viewModel: TripViewModel, price: Int): List<Int> {
         predictions = ParsePricePredict(response.bodyAsText())
     } catch (e: Exception) {
         Log.v("Ktor Request Error", e.localizedMessage)
-        predictions = listOf(0, 20, 27, -15)
+        predictions = listOf(0, 20, 22, 50, 52, 53, 56, 20, 10, 0, -15, -35)
     } finally {
         client.close()
     }
