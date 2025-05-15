@@ -95,16 +95,16 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.taxicompare.api.GetConfigs
 import com.example.taxicompare.api.GetPricePredict
 import com.example.taxicompare.cache.PricePredictionRepository
 import com.example.taxicompare.model.UserRequest
+import com.example.taxicompare.navigation.BottomNavItem
+import com.example.taxicompare.testingdata.MakeStaticCarsharingPrice
+import com.example.taxicompare.testingdata.MakeStaticKickharingPrice
 
-//@Preview
-//@Composable
-//fun Preview() {
-//    TripDetailScreen("уник", "дом")
-//}
 
 @Composable
 fun TripDetailScreen(
@@ -153,6 +153,7 @@ fun MakeTripDetailScreen(
         }
     } else {
         LazyColumn () {
+            item { MakeOtherTransportSuggestions(viewModel) }
             items(tripOffers) { tripOffer ->
                 val isCheapest = tripOffer.price.toInt() == minPrice
                 val isFastest = tripOffer.tripTime?.toIntOrNull() == minTime
@@ -175,7 +176,7 @@ fun MakeTripDetailScreen(
 
 @Composable
 fun TripCard(
-    iconResId: Int, // Resource ID for the image/icon
+    iconResId: Int,
     companyName: String,
     price: String,
     tripTime: String?,
@@ -323,65 +324,56 @@ fun TripCardLabels(
     }
 }
 
-//@Composable
-//fun PricePredictionChart(predictions: List<Int>, currentPrice: Int) {
-//    Column(modifier = Modifier.padding(top = 12.dp)) {
-//        Text(
-//            text = "Price Prediction Chart",
-//            style = MaterialTheme.typography.titleMedium,
-//            modifier = Modifier.padding(bottom = 8.dp)
-//        )
-//
-//        Canvas(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .height(150.dp)
-//                .padding(16.dp)
-//        ) {
-//            val maxPrice = (predictions + currentPrice).maxOrNull() ?: 100
-//            val minPrice = (predictions + currentPrice).minOrNull() ?: 0
-//            val priceRange = maxPrice - minPrice
-//            val canvasHeight = size.height
-//            val canvasWidth = size.width
-//
-//            // Draw simple horizontal guides
-//            (0..4).forEach { step ->
-//                val y = canvasHeight / 4 * step
-//                drawLine(
-//                    color =Color.LightGray,
-//                    start = Offset(0f, y),
-//                    end = Offset(canvasWidth, y)
-//                )
-//            }
-//
-//            val pointSpacing = (canvasWidth / (predictions.size)).coerceAtLeast(1f)
-//            val points = predictions.mapIndexed { index, price ->
-//                val x = index * pointSpacing
-//                val yRatio = (price - minPrice).toFloat() / priceRange
-//                val y = canvasHeight - (yRatio * canvasHeight)
-//                Offset(x, y)
-//            }
-//
-//            // Draw prediction curve
-//            for (i in 0 until points.size - 1) {
-//                drawLine(
-//                    color = Color.Blue,
-//                    start = points[i],
-//                    end = points[i + 1],
-//                    strokeWidth = 4f,
-//                )
-//            }
-//
-//            // Mark current price line
-//            val currentPriceY = canvasHeight - ((currentPrice - minPrice).toFloat() / priceRange) * canvasHeight
-//            drawLine(
-//                color = Color.Red,
-//                strokeWidth = 1.dp.toPx(),
-//                start = Offset(0f, currentPriceY),
-//                end = Offset(canvasWidth, currentPriceY),
-//                pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f))
-//            )
-//        }
-//    }
-//}
+@Composable
+fun MakeOtherTransportSuggestions(
+    viewModel: TripViewModel
+) {
+    var tripInfo by remember { mutableStateOf(viewModel.extendedTripInfo) }
 
+    tripInfo?.let {
+        Row (
+            Modifier.fillMaxWidth()
+        ) {
+            Card(
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                modifier = Modifier
+                    .fillMaxWidth(0.5f)
+                    .padding(start = 16.dp, end = 4.dp, bottom = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF2196F3)),
+                onClick = {
+                    viewModel.setNavItem(BottomNavItem.CarSharing)
+                    viewModel.getNavController().popBackStack("location_entry", inclusive = false)
+                }
+            ) {
+                val time = (it.duration/60).toInt()
+                val tripPrice = time*MakeStaticCarsharingPrice()
+                Text(
+                    text = "На каршеринге\nот ${tripPrice}₽",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+            Card(
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                modifier = Modifier
+                    .fillMaxWidth(1.0f)
+                    .padding(start = 4.dp, end = 16.dp, bottom = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF2196F3)),
+                onClick = {
+                    viewModel.setNavItem(BottomNavItem.KickSharing)
+                    viewModel.getNavController().popBackStack("location_entry", inclusive = false)
+                }
+            ) {
+                val time = (it.duration*1.3/60).toInt()
+                val tripPrice = time*MakeStaticKickharingPrice()
+                Text(
+                    text = "На самокате\nот ${tripPrice}₽",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
+    }
+}

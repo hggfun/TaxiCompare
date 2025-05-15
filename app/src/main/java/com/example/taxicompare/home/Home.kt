@@ -26,6 +26,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,7 +55,7 @@ fun HomeScreen(
     onNavigateToTripDetails: (String, String, UserRequest) -> Unit,
     onNavigateToSettings: () -> Unit
 ) {
-    var selectedItem by remember { mutableStateOf<BottomNavItem>(BottomNavItem.Taxi) }
+    val selectedItem by viewModel.selectedNavItem.collectAsState()
     viewModel.loadTrips()
 
     TaxiCompareTheme {
@@ -62,13 +63,19 @@ fun HomeScreen(
             modifier = Modifier.fillMaxSize(),
             bottomBar = { MakeBottomNavigation(
                 selectedItem = selectedItem,
-                onItemSelected = { selectedItem = it }
+                onItemSelected = { viewModel.setNavItem(it) },
+                viewModel = viewModel
             ) }
         ) { innerPadding ->
             when (selectedItem) {
-                BottomNavItem.Taxi -> TaxiScreen(innerPadding, viewModel, onNavigateToTripDetails, onNavigateToSettings)
-                BottomNavItem.CarSharing -> CarsharingScreen()
-                BottomNavItem.KickSharing -> KicksharingScreen()
+                BottomNavItem.Taxi -> TaxiScreen(
+                    innerPadding,
+                    viewModel,
+                    onNavigateToTripDetails,
+                    onNavigateToSettings,
+                )
+                BottomNavItem.CarSharing -> CarsharingScreen(innerPadding, viewModel)
+                BottomNavItem.KickSharing -> KicksharingScreen(innerPadding, viewModel)
             }
         }
     }
@@ -79,7 +86,7 @@ fun TaxiScreen(
     innerPadding: PaddingValues,
     viewModel: TripViewModel,
     onNavigateToTripDetails: (String, String, UserRequest) -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
 ) {
     Column(
         modifier = Modifier

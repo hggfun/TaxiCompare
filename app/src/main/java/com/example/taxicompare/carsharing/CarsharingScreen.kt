@@ -41,7 +41,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.taxicompare.R
 import com.example.taxicompare.api.GetCars
+import com.example.taxicompare.kicksharing.MakeByDistanceState
+import com.example.taxicompare.testingdata.MakeStaticCarsharingPrice
 import com.example.taxicompare.tripdetail.PricePredictionChart
+import com.example.taxicompare.tripdetail.TripViewModel
 import com.example.taxicompare.tripdetail.isBetterPricePredicted
 import com.yandex.mapkit.MapKitFactory
 import com.yandex.mapkit.geometry.Point
@@ -52,32 +55,53 @@ import com.yandex.runtime.image.ImageProvider
 
 @Composable
 fun CarsharingScreen(
+    innerPadding: PaddingValues,
+    viewModel: TripViewModel?
 ) {
     val context = LocalContext.current
     val mapView = remember { mutableStateOf<MapView?>(null) }
 
-    Scaffold (modifier = Modifier.fillMaxSize() ){ pd ->
-        AndroidView(factory = { MapView(it)}, modifier = Modifier.fillMaxSize()) {
-            mapView.value = it
-        }
+    AndroidView(
+        factory = { MapView(it)},
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+    ) {
+        mapView.value = it
     }
 
     LaunchedEffect(key1 = "loadMapView") {
         snapshotFlow { mapView.value }.collect {
             it?.let {
-//                MapKitFactory.initialize(context)
                 MapKitFactory.getInstance().onStart()
                 it.onStart()
             }
         }
     }
 
+    val staticPrice = MakeStaticCarsharingPrice()
+
     if (mapView.value != null)
-    LocateCarsOnMap(mapView.value!!, context)
+        LocateCarsOnMap(
+            staticPrice,
+            mapView.value!!,
+            context
+        )
+
+    if (viewModel != null) {
+        MakeByDistanceState(
+            price = staticPrice,
+            viewModel = viewModel,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        )
+    }
 }
 
 @Composable
 fun LocateCarsOnMap(
+    price: Int,
     mapView: MapView,
     contex: Context
 ) {
@@ -110,6 +134,7 @@ fun LocateCarsOnMap(
     selectedMapObject.let {
         if (selectedMapObject) {
             CarDetailsCard(
+                price,
                 selectedMapObject,
                 onDismissRequest = { selectedMapObject = false }
             )
@@ -120,6 +145,7 @@ fun LocateCarsOnMap(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CarDetailsCard(
+    price: Int,
     showSheet: Boolean,
     onDismissRequest: () -> Unit
 ) {
@@ -131,21 +157,27 @@ fun CarDetailsCard(
         ) {
             Card(
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                modifier = Modifier.fillMaxWidth()
-                    .padding(10.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
-                Row(modifier = Modifier.padding(16.dp)) {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth()
+                ) {
                     Image(
-                        painter = painterResource(R.drawable.car),
+                        painter = painterResource(R.drawable.carsharing),
                         contentDescription = "car",
                         modifier = Modifier
-                            .size(40.dp)
+                            .fillMaxWidth()
                             .clip(RoundedCornerShape(4.dp))
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text("BelkaCar", style = MaterialTheme.typography.titleMedium)
-                        Text("Цена: от 19₽/минута", style = MaterialTheme.typography.bodyMedium)
+                        Text("Цена: от ${price}₽/минута", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }

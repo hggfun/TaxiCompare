@@ -15,3 +15,11 @@ fun MakeStaticOffers(entryPrice: Int): List<TripOffer> {
         TripOffer(iconResId = R.drawable.omega, companyName = "Omega", price = randomPrice(20).toString(), tripTime = null)
     )
 }
+
+fun MakeStaticCarsharingPrice(): Int {
+    return 19
+}
+
+fun MakeStaticKickharingPrice(): Int {
+    return 9
+}
